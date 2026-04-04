@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CompanyStatus } from "@/types/supabase";
@@ -73,6 +73,14 @@ export function FilterBar() {
     },
     [updateParams]
   );
+
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current !== null) {
+        clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className={cn("space-y-4 transition-opacity", isPending && "opacity-50 pointer-events-none")}>

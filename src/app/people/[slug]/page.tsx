@@ -72,7 +72,7 @@ export default async function PersonDetailPage({
               <div>
                 <h1 className="text-2xl font-bold">{person.name}</h1>
                 <p className="mt-1 text-text-secondary">
-                  {person.company?.name} · {person.current_role}
+                  {[person.company?.name, person.current_role].filter(Boolean).join(" · ")}
                 </p>
                 <div className="mt-2">
                   <StatusBadge status={person.company?.status || "active"} />

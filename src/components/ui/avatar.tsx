@@ -29,6 +29,8 @@ export function Avatar({ src, name, size = "md", className }: AvatarProps) {
   if (!src || error) {
     return (
       <div
+        role="img"
+        aria-label={name}
         className={cn(
           "flex items-center justify-center rounded-full font-semibold text-white",
           sizeMap[size],
@@ -36,7 +38,7 @@ export function Avatar({ src, name, size = "md", className }: AvatarProps) {
           className
         )}
       >
-        {getInitials(name)}
+        <span aria-hidden="true">{getInitials(name)}</span>
       </div>
     );
   }
@@ -47,6 +49,7 @@ export function Avatar({ src, name, size = "md", className }: AvatarProps) {
       alt={name}
       width={imageSizeMap[size]}
       height={imageSizeMap[size]}
+      sizes={size === "sm" ? "40px" : size === "md" ? "64px" : "96px"}
       className={cn("rounded-full object-cover", sizeMap[size], className)}
       onError={() => setError(true)}
     />

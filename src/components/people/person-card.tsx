@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Video } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/badge";
@@ -26,15 +25,18 @@ export function PersonCard({ person, index }: PersonCardProps) {
   const status = (person.company?.status || "active") as CompanyStatus;
   const appearanceCount = person.appearances?.[0]?.count || 0;
 
+  const delay = Math.min(index * 0.05, 0.5);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.3, ease: "easeOut" }}
+    <div
+      style={{
+        animation: `fadeSlideUp 0.3s ease-out ${delay}s both`,
+      }}
     >
       <Link
         href={`/people/${person.slug}`}
-        className="group block rounded-xl border border-[#222] bg-[#111] p-5 transition-all hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(96,165,250,0.1)] hover:scale-[1.02]"
+        aria-label={`${person.name}${person.company?.name ? ` — ${person.company.name}` : ""} 프로필 보기`}
+        className="group block rounded-xl border border-border bg-card p-5 transition-all hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(96,165,250,0.1)] hover:scale-[1.02]"
       >
         <div className="flex items-center gap-4">
           <Avatar
@@ -43,10 +45,10 @@ export function PersonCard({ person, index }: PersonCardProps) {
             size="md"
           />
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-lg font-semibold text-[#F0F0F0]">
+            <h3 className="truncate text-lg font-semibold text-foreground">
               {person.name}
             </h3>
-            <p className="truncate text-sm text-[#A0A0A0]">
+            <p className="truncate text-sm text-text-secondary">
               {person.company?.name && (
                 <>
                   {person.company.name}
@@ -57,8 +59,11 @@ export function PersonCard({ person, index }: PersonCardProps) {
             <div className="mt-2 flex items-center gap-2">
               <StatusBadge status={status} />
               {appearanceCount > 0 && (
-                <span className="inline-flex items-center gap-1 text-xs text-[#666]">
-                  <Video className="h-3 w-3" />
+                <span
+                  className="inline-flex items-center gap-1 text-xs text-text-tertiary"
+                  aria-label={`EO 출연 ${appearanceCount}회`}
+                >
+                  <Video className="h-3 w-3" aria-hidden="true" />
                   {appearanceCount}회
                 </span>
               )}
@@ -66,6 +71,6 @@ export function PersonCard({ person, index }: PersonCardProps) {
           </div>
         </div>
       </Link>
-    </motion.div>
+    </div>
   );
 }

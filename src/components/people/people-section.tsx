@@ -1,5 +1,3 @@
-"use client";
-
 import { PersonGrid } from "./person-grid";
 import type { CompanyStatus } from "@/types/supabase";
 
@@ -121,6 +119,36 @@ const mockPeople = [
   },
 ];
 
-export function PeopleSection() {
-  return <PersonGrid people={mockPeople} />;
+interface PeopleSectionProps {
+  status?: CompanyStatus;
+  search?: string;
+  sort?: "recent" | "name";
+}
+
+export function PeopleSection({ status, search, sort = "recent" }: PeopleSectionProps) {
+  let filtered = mockPeople;
+
+  if (status) {
+    filtered = filtered.filter((p) => p.company?.status === status);
+  }
+
+  if (search) {
+    const q = search.toLowerCase();
+    filtered = filtered.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.company?.name ?? "").toLowerCase().includes(q)
+    );
+  }
+
+  if (sort === "name") {
+    filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  } else {
+    // "recent": sort by updated_at descending
+    filtered = [...filtered].sort(
+      (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    );
+  }
+
+  return <PersonGrid people={filtered} />;
 }

@@ -1,7 +1,7 @@
 export function Footer() {
   return (
-    <footer className="border-t border-[#222] py-8">
-      <div className="mx-auto max-w-[1200px] px-4 text-center text-xs text-[#666]">
+    <footer className="border-t border-border py-8">
+      <div className="mx-auto max-w-[1200px] px-4 text-center text-xs text-text-tertiary">
         <p>
           EO Featured — EO가 발견한 사람들의 성장 기록
         </p>
@@ -13,7 +13,7 @@ export function Footer() {
             href="https://youtube.com/@eo"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#A0A0A0] transition-colors hover:text-[#F0F0F0]"
+            className="text-text-secondary transition-colors hover:text-foreground"
           >
             EO YouTube
           </a>

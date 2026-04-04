@@ -28,7 +28,7 @@ export function Timeline({ milestones }: TimelineProps) {
   return (
     <div className="relative space-y-0">
       {/* Vertical line */}
-      <div className="absolute left-5 top-0 h-full w-px bg-[#222]" />
+      <div className="absolute left-5 top-0 h-full w-px bg-border" />
 
       {sorted.map((milestone, i) => {
         const config = eventConfig[milestone.event_type];
@@ -44,7 +44,7 @@ export function Timeline({ milestones }: TimelineProps) {
             transition={{ delay: i * 0.05, duration: 0.3 }}
             className={cn(
               "relative flex gap-4 py-3",
-              isUnverified && "border-l-2 border-dashed border-[#333]"
+              isUnverified && "border-l-2 border-dashed border-amber-500/40 pl-2"
             )}
           >
             {/* Icon */}
@@ -60,7 +60,7 @@ export function Timeline({ milestones }: TimelineProps) {
 
             {/* Content */}
             <div className="min-w-0 flex-1 pt-1">
-              <p className="font-mono text-xs text-[#666]">
+              <p className="font-mono text-xs text-text-tertiary">
                 {new Date(milestone.date).toLocaleDateString("ko-KR", {
                   year: "numeric",
                   month: "long",
@@ -68,19 +68,20 @@ export function Timeline({ milestones }: TimelineProps) {
               </p>
               <p className={cn(
                 "mt-0.5 text-sm",
-                isEO ? "font-semibold text-blue-400" : "text-[#A0A0A0]"
+                isEO ? "font-semibold text-blue-400" : "text-text-secondary"
               )}>
                 {milestone.description}
                 {isUnverified && (
-                  <span className="ml-2 text-xs text-[#666]">(미확인)</span>
+                  <span className="ml-2 rounded bg-amber-500/10 px-1.5 py-0.5 text-xs text-amber-400/80">(미확인)</span>
                 )}
               </p>
-              {milestone.source_url && (
+              {milestone.source_url && /^https?:\/\//.test(milestone.source_url) && (
                 <a
                   href={milestone.source_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1 inline-block text-xs text-[#666] hover:text-[#A0A0A0]"
+                  aria-label={`출처: ${milestone.description}`}
+                  className="mt-1 inline-block text-xs text-text-tertiary hover:text-text-secondary"
                 >
                   출처
                 </a>

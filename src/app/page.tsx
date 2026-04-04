@@ -3,6 +3,7 @@ import { StatsBar } from "@/components/stats/stats-bar";
 import { FilterBar } from "@/components/filters/filter-bar";
 import { PersonGridSkeleton } from "@/components/ui/skeleton";
 import { PeopleSection } from "@/components/people/people-section";
+import type { CompanyStatus } from "@/types/supabase";
 
 // Mock data for initial development
 const mockStats = {
@@ -12,7 +13,21 @@ const mockStats = {
   ipo_count: 12,
 };
 
-export default function HomePage() {
+interface HomePageProps {
+  searchParams: Promise<{
+    status?: string;
+    search?: string;
+    sort?: string;
+    cursor?: string;
+  }>;
+}
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const params = await searchParams;
+  const status = params.status as CompanyStatus | undefined;
+  const search = params.search;
+  const sort = (params.sort as "recent" | "name") || "recent";
+
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-8 md:py-12">
       {/* Hero */}
@@ -20,7 +35,7 @@ export default function HomePage() {
         <h1 className="font-serif text-3xl font-bold md:text-5xl">
           EO Featured
         </h1>
-        <p className="mt-2 text-sm text-[#A0A0A0] md:text-base">
+        <p className="mt-2 text-sm text-text-secondary md:text-base">
           EO가 발견한 사람들의 성장 기록
         </p>
       </div>
@@ -39,7 +54,7 @@ export default function HomePage() {
 
       {/* People Grid */}
       <Suspense fallback={<PersonGridSkeleton />}>
-        <PeopleSection />
+        <PeopleSection status={status} search={search} sort={sort} />
       </Suspense>
     </div>
   );

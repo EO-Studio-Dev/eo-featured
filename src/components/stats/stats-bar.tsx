@@ -21,23 +21,26 @@ function CountUp({ target, format }: { target: number; format?: (n: number) => s
   useEffect(() => {
     if (!inView) return;
     const duration = 800;
-    const steps = 30;
-    const increment = target / steps;
-    let current = 0;
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= target) {
-        setCount(target);
-        clearInterval(timer);
+    const startTime = performance.now();
+    let rafId: number;
+
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      setCount(Math.floor(progress * target));
+      if (progress < 1) {
+        rafId = requestAnimationFrame(tick);
       } else {
-        setCount(Math.floor(current));
+        setCount(target);
       }
-    }, duration / steps);
-    return () => clearInterval(timer);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
   }, [inView, target]);
 
   return (
-    <span ref={ref} className="font-mono text-3xl font-bold tabular-nums text-[#F0F0F0] md:text-4xl">
+    <span ref={ref} className="font-mono text-3xl font-bold tabular-nums text-foreground md:text-4xl">
       {format ? format(count) : count.toLocaleString()}
     </span>
   );
@@ -45,10 +48,10 @@ function CountUp({ target, format }: { target: number; format?: (n: number) => s
 
 function StatCard({ icon, value, label, tooltip, format }: StatCardProps) {
   return (
-    <div className="group relative rounded-xl border border-[#222] bg-[#111] p-5" title={tooltip}>
-      <div className="mb-2 text-[#666]">{icon}</div>
+    <div className="group relative rounded-xl border border-border bg-card p-5" title={tooltip}>
+      <div className="mb-2 text-text-tertiary">{icon}</div>
       <CountUp target={value} format={format} />
-      <p className="mt-1 text-sm text-[#666]">{label}</p>
+      <p className="mt-1 text-sm text-text-tertiary">{label}</p>
     </div>
   );
 }

@@ -8,12 +8,16 @@ export async function getPeople(filters: PeopleFilters = {}) {
   const supabase = createServerClient();
   const limit = filters.limit || PAGE_SIZE;
 
+  const companyJoin = filters.status
+    ? `company:companies!inner(*)`
+    : `company:companies(*)`;
+
   let query = supabase
     .from("people")
     .select(
       `
       *,
-      company:companies(*),
+      ${companyJoin},
       appearances(count)
     `
     )
@@ -21,12 +25,12 @@ export async function getPeople(filters: PeopleFilters = {}) {
     .limit(limit);
 
   if (filters.status) {
-    query = query.eq("company.status", filters.status);
+    query = query.eq("companies.status", filters.status);
   }
 
   if (filters.search) {
     query = query.or(
-      `name.ilike.%${filters.search}%,company.name.ilike.%${filters.search}%`
+      `name.ilike.%${filters.search}%,companies.name.ilike.%${filters.search}%`
     );
   }
 

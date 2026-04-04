@@ -28,6 +28,19 @@ export function FilterBar() {
   );
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const handleTabKeyDown = (e: React.KeyboardEvent) => {
+    const tabs = e.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]');
+    const currentIdx = STATUS_TABS.findIndex(t => t.value === activeStatus);
+    let nextIdx = currentIdx;
+    if (e.key === 'ArrowRight') nextIdx = (currentIdx + 1) % tabs.length;
+    else if (e.key === 'ArrowLeft') nextIdx = (currentIdx - 1 + tabs.length) % tabs.length;
+    else if (e.key === 'Home') nextIdx = 0;
+    else if (e.key === 'End') nextIdx = tabs.length - 1;
+    else return;
+    e.preventDefault();
+    tabs[nextIdx]?.focus();
+  };
+
   const activeStatus = searchParams.get("status") || "all";
   const activeSort = searchParams.get("sort") || "recent";
 
@@ -68,6 +81,7 @@ export function FilterBar() {
         role="tablist"
         aria-label="회사 상태 필터"
         className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
+        onKeyDown={handleTabKeyDown}
       >
         {STATUS_TABS.map((tab) => (
           <button
@@ -101,7 +115,7 @@ export function FilterBar() {
             value={searchValue}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="인물 또는 기업 검색..."
-            className="w-full rounded-lg border border-border-active bg-input-bg py-2 pl-10 pr-4 text-sm text-foreground placeholder-text-tertiary transition-colors focus:border-blue-500/50 focus:outline-none"
+            className="w-full rounded-lg border border-border-active bg-input-bg py-2 pl-10 pr-4 text-sm text-foreground placeholder-text-tertiary transition-colors focus:border-accent/50 focus:outline-none"
           />
         </div>
         <label htmlFor="sort-select" className="sr-only">
@@ -112,7 +126,7 @@ export function FilterBar() {
           value={activeSort}
           onChange={(e) => updateParams("sort", e.target.value)}
           aria-label="정렬 기준"
-          className="rounded-lg border border-border-active bg-input-bg px-3 py-2 text-sm text-text-secondary focus:border-blue-500/50 focus:outline-none"
+          className="rounded-lg border border-border-active bg-input-bg px-3 py-2 text-sm text-text-secondary focus:border-accent/50 focus:outline-none"
         >
           {SORT_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>

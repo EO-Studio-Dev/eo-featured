@@ -31,7 +31,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-8 md:py-12">
       {/* Hero */}
-      <div className="mb-8 md:mb-12">
+      <div
+        className="mb-8 md:mb-12 rounded-2xl px-8 py-10 md:py-14"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 60% at 30% 40%, rgba(96,165,250,0.08) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 70% 70%, rgba(96,165,250,0.05) 0%, transparent 60%)",
+        }}
+      >
         <h1 className="font-serif text-3xl font-bold md:text-5xl">
           EO Featured
         </h1>

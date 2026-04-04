@@ -16,7 +16,9 @@ export default function GlobalError({ error, reset }: ErrorProps) {
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
       <h2 className="font-mono text-lg text-foreground">오류가 발생했습니다</h2>
       <p className="text-sm text-text-tertiary">
-        {error.message || "알 수 없는 오류가 발생했습니다."}
+        {process.env.NODE_ENV === "development"
+          ? error.message || "알 수 없는 오류가 발생했습니다."
+          : "알 수 없는 오류가 발생했습니다."}
       </p>
       <button
         onClick={reset}

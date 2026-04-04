@@ -4,6 +4,10 @@ import type { Person, PeopleFilters, StatsCache } from "@/types/supabase";
 
 const PAGE_SIZE = 24;
 
+function sanitizeFilterValue(value: string): string {
+  return value.replace(/[%_.\\(),]/g, "\\$&");
+}
+
 export async function getPeople(filters: PeopleFilters = {}) {
   const supabase = createServerClient();
   const limit = filters.limit || PAGE_SIZE;
@@ -29,8 +33,9 @@ export async function getPeople(filters: PeopleFilters = {}) {
   }
 
   if (filters.search) {
+    const safe = sanitizeFilterValue(filters.search);
     query = query.or(
-      `name.ilike.%${filters.search}%,companies.name.ilike.%${filters.search}%`
+      `name.ilike.%${safe}%,companies.name.ilike.%${safe}%`
     );
   }
 

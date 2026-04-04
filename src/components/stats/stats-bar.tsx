@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView } from "framer-motion";
 import { Users, Building2, TrendingUp, Landmark } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 
@@ -15,8 +14,26 @@ interface StatCardProps {
 
 function CountUp({ target, format }: { target: number; format?: (n: number) => string }) {
   const [count, setCount] = useState(0);
+  const [inView, setInView] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!inView) return;
@@ -27,7 +44,8 @@ function CountUp({ target, format }: { target: number; format?: (n: number) => s
     const tick = (now: number) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      setCount(Math.floor(progress * target));
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
       if (progress < 1) {
         rafId = requestAnimationFrame(tick);
       } else {
@@ -62,11 +80,9 @@ interface StatsBarProps {
 
 export function StatsBar({ stats }: StatsBarProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+    <div
       className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4"
+      style={{ animation: "fadeSlideUp 0.5s ease-out both" }}
     >
       <StatCard
         icon={<Users className="h-5 w-5" />}
@@ -93,6 +109,6 @@ export function StatsBar({ stats }: StatsBarProps) {
         label="IPO"
         tooltip="IPO/상장 완료 기업 수"
       />
-    </motion.div>
+    </div>
   );
 }

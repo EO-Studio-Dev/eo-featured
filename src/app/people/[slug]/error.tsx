@@ -17,7 +17,9 @@ export default function PersonError({ error, reset }: ErrorProps) {
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
       <h2 className="font-mono text-lg text-foreground">페이지를 불러올 수 없습니다</h2>
       <p className="text-sm text-text-tertiary">
-        {error.message || "인물 정보를 가져오는 중 오류가 발생했습니다."}
+        {process.env.NODE_ENV === "development"
+          ? error.message || "인물 정보를 가져오는 중 오류가 발생했습니다."
+          : "인물 정보를 가져오는 중 오류가 발생했습니다."}
       </p>
       <div className="flex gap-3">
         <button

@@ -36,7 +36,7 @@ export function PersonCard({ person, index }: PersonCardProps) {
       <Link
         href={`/people/${person.slug}`}
         aria-label={`${person.name}${person.company?.name ? ` — ${person.company.name}` : ""} 프로필 보기`}
-        className="group block rounded-xl border border-border bg-card p-5 transition-all hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(96,165,250,0.1)] hover:scale-[1.02]"
+        className="group block rounded-xl border border-border bg-card p-5 transition-all md:hover:border-accent/30 md:hover:shadow-[0_0_20px_var(--color-accent-glow,rgba(96,165,250,0.1))] md:hover:scale-[1.02]"
       >
         <div className="flex items-center gap-4">
           <Avatar

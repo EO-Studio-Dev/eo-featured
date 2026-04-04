@@ -1,12 +1,11 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Video, Rocket, TrendingUp, Building2, Award, Zap, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Milestone, MilestoneEventType } from "@/types/supabase";
 
 const eventConfig: Record<MilestoneEventType, { icon: React.ElementType; color: string }> = {
-  eo_appearance: { icon: Video, color: "text-blue-400 bg-blue-500/20" },
+  eo_appearance: { icon: Video, color: "text-accent bg-accent/20" },
   funding: { icon: TrendingUp, color: "text-green-400 bg-green-500/20" },
   ipo: { icon: Rocket, color: "text-purple-400 bg-purple-500/20" },
   acquisition: { icon: Building2, color: "text-amber-400 bg-amber-500/20" },
@@ -37,22 +36,20 @@ export function Timeline({ milestones }: TimelineProps) {
         const isUnverified = milestone.confidence < 0.7;
 
         return (
-          <motion.div
+          <div
             key={milestone.id}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.05, duration: 0.3 }}
             className={cn(
               "relative flex gap-4 py-3",
               isUnverified && "border-l-2 border-dashed border-amber-500/40 pl-2"
             )}
+            style={{ animation: `fadeSlideLeft 0.3s ease-out ${i * 0.05}s both` }}
           >
             {/* Icon */}
             <div
               className={cn(
                 "relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
                 config.color,
-                isEO && "ring-2 ring-blue-500/50"
+                isEO && "ring-2 ring-accent/50"
               )}
             >
               <Icon className="h-4 w-4" />
@@ -68,7 +65,7 @@ export function Timeline({ milestones }: TimelineProps) {
               </p>
               <p className={cn(
                 "mt-0.5 text-sm",
-                isEO ? "font-semibold text-blue-400" : "text-text-secondary"
+                isEO ? "font-semibold text-accent" : "text-text-secondary"
               )}>
                 {milestone.description}
                 {isUnverified && (
@@ -87,7 +84,7 @@ export function Timeline({ milestones }: TimelineProps) {
                 </a>
               )}
             </div>
-          </motion.div>
+          </div>
         );
       })}
     </div>

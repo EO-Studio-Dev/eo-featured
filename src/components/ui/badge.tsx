@@ -10,26 +10,42 @@ import type { CompanyStatus } from "@/types/supabase";
 
 const statusConfig: Record<
   CompanyStatus,
-  { label: string; color: string; icon: LucideIcon }
+  { label: string; vars: { bg: string; text: string; border: string }; icon: LucideIcon }
 > = {
   active: {
     label: "운영중",
-    color: "bg-green-500/15 text-green-400 border-green-500/30",
+    vars: {
+      bg: "var(--color-status-active-bg)",
+      text: "var(--color-status-active-text)",
+      border: "var(--color-status-active-border)",
+    },
     icon: Rocket,
   },
   ipo: {
     label: "IPO",
-    color: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+    vars: {
+      bg: "var(--color-status-ipo-bg)",
+      text: "var(--color-status-ipo-text)",
+      border: "var(--color-status-ipo-border)",
+    },
     icon: TrendingUp,
   },
   acquired: {
     label: "인수됨",
-    color: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+    vars: {
+      bg: "var(--color-status-acquired-bg)",
+      text: "var(--color-status-acquired-text)",
+      border: "var(--color-status-acquired-border)",
+    },
     icon: Building2,
   },
   closed: {
     label: "폐업",
-    color: "bg-neutral-500/15 text-neutral-400 border-neutral-500/30",
+    vars: {
+      bg: "var(--color-status-closed-bg)",
+      text: "var(--color-status-closed-text)",
+      border: "var(--color-status-closed-border)",
+    },
     icon: XCircle,
   },
 };
@@ -41,9 +57,13 @@ export function StatusBadge({ status }: { status: CompanyStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
-        config.color
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium"
       )}
+      style={{
+        backgroundColor: config.vars.bg,
+        color: config.vars.text,
+        borderColor: config.vars.border,
+      }}
     >
       <Icon className="h-3 w-3" />
       {config.label}

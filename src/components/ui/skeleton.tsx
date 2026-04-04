@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 export function Skeleton({ className }: { className?: string }) {
   return (
     <div
+      role="status"
+      aria-label="로딩 중"
       className={cn("animate-pulse rounded-lg bg-elevated", className)}
     />
   );
@@ -25,7 +27,11 @@ export function PersonCardSkeleton() {
 
 export function PersonGridSkeleton({ count = 6 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 md:gap-5">
+    <div
+      role="status"
+      aria-label="인물 목록 불러오는 중"
+      className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 md:gap-5"
+    >
       {Array.from({ length: count }).map((_, i) => (
         <PersonCardSkeleton key={i} />
       ))}

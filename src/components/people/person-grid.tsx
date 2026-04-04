@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { PersonCard, type PersonCardData } from "./person-card";
 import { PersonGridSkeleton } from "@/components/ui/skeleton";
 import { SearchX } from "lucide-react";
@@ -17,6 +18,8 @@ export function PersonGrid({
   hasMore,
   onLoadMore,
 }: PersonGridProps) {
+  const router = useRouter();
+
   if (isLoading) {
     return <PersonGridSkeleton />;
   }
@@ -31,6 +34,12 @@ export function PersonGrid({
         <p className="mt-1 text-sm text-text-tertiary">
           다른 검색어나 필터를 시도해보세요
         </p>
+        <button
+          onClick={() => router.push("/")}
+          className="mt-6 rounded-lg border border-border-active bg-elevated px-5 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-border-hover hover:text-foreground"
+        >
+          필터 초기화
+        </button>
       </div>
     );
   }

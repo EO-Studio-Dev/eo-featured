@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
 import { searchGoogleNews } from "@/lib/news";
-import { categorize, computeConfidence, extractDomain } from "@/lib/news-categorizer";
+import { computeConfidence, extractDomain } from "@/lib/news-categorizer";
 import { buildSearchQueries, isHeadlineRelevant, shouldSkipCompany } from "@/lib/news-filter";
+import { analyzeHeadlinesBatched } from "@/lib/news-ai";
 
 const BATCH_SIZE = 20;
 
@@ -46,18 +47,42 @@ export async function POST(request: NextRequest) {
       const seen = new Set<string>();
       const results = allResults.filter(r => { if (seen.has(r.link)) return false; seen.add(r.link); return true; });
 
-      for (const result of results) {
-        const domain = extractDomain(result.link);
-        // Filter irrelevant headlines
-        if (!isHeadlineRelevant(result.title, person.name, person.company_name, domain)) {
-          filtered++;
-          continue;
-        }
+      // Pre-filter with regex
+      const preFiltered = results.filter(r => {
+        const domain = extractDomain(r.link);
+        return isHeadlineRelevant(r.title, person.name, person.company_name, domain);
+      });
 
-        const category = categorize(result.title);
+      // AI analysis with Haiku
+      const toAnalyze = preFiltered.map((r, i) => ({
+        id: String(i),
+        headline: r.title,
+        personName: person.name,
+        companyName: person.company_name,
+      }));
+
+      let aiResults: Map<string, { relevant: boolean; category: string; story_id: string }> = new Map();
+      if (toAnalyze.length > 0 && process.env.ANTHROPIC_API_KEY) {
+        try {
+          aiResults = await analyzeHeadlinesBatched(toAnalyze);
+        } catch {
+          // Fallback: skip AI if it fails
+        }
+      }
+
+      for (let idx = 0; idx < preFiltered.length; idx++) {
+        const result = preFiltered[idx];
+        const ai = aiResults.get(String(idx));
+
+        // If AI says not relevant, skip
+        if (ai && !ai.relevant) { filtered++; continue; }
+
+        const domain = extractDomain(result.link);
+        const category = ai?.category || "other";
         const confidence = computeConfidence(
           result.title, person.name, person.company_name, domain, result.pubDate
         );
+        const storyId = ai?.story_id || null;
 
         try {
           const { rowCount } = await sql`

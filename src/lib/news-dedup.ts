@@ -123,6 +123,54 @@ export function deduplicateNews(items: NewsItem[]): DeduplicatedNewsItem[] {
   return result;
 }
 
+/**
+ * Group by AI-assigned story_id first, then fall back to similarity.
+ */
+export function deduplicateNewsByStoryId(items: NewsItem[]): DeduplicatedNewsItem[] {
+  if (items.length === 0) return [];
+
+  // Group by story_id (AI-assigned)
+  const storyGroups = new Map<string, NewsItem[]>();
+  const ungrouped: NewsItem[] = [];
+
+  for (const item of items) {
+    const sid = (item as unknown as { story_id?: string }).story_id || null;
+    if (sid) {
+      const group = storyGroups.get(sid) || [];
+      group.push(item);
+      storyGroups.set(sid, group);
+    } else {
+      ungrouped.push(item);
+    }
+  }
+
+  const result: DeduplicatedNewsItem[] = [];
+
+  // Process story_id groups
+  for (const group of storyGroups.values()) {
+    group.sort((a, b) => getSourceTier(a.source_domain) - getSourceTier(b.source_domain));
+    const main = group[0];
+    const related = group.slice(1).map(g => ({
+      domain: g.source_domain || "source",
+      url: g.source_url,
+    }));
+    result.push({ ...main, relatedSources: related });
+  }
+
+  // Process ungrouped with similarity-based dedup
+  const dedupedUngrouped = deduplicateNews(ungrouped);
+  result.push(...dedupedUngrouped);
+
+  // Sort by date
+  result.sort((a, b) => {
+    const da = new Date(a.published_at || a.discovered_at).getTime();
+    const db = new Date(b.published_at || b.discovered_at).getTime();
+    return db - da;
+  });
+
+  return result;
+}
+
 function areSameStory(
   a: { item: NewsItem; keywords: Set<string>; entities: Set<string> },
   b: { item: NewsItem; keywords: Set<string>; entities: Set<string> },

@@ -149,7 +149,7 @@ export async function getRecentNews(filters?: { category?: NewsCategory; limit?:
     const { rows } = await sql`
       SELECT
         n.id, n.person_id, n.company_id, n.category, n.headline, n.summary,
-        n.source_url, n.source_domain, n.published_at, n.discovered_at, n.confidence, n.og_image_url,
+        n.source_url, n.source_domain, n.published_at, n.discovered_at, n.confidence, n.og_image_url, n.story_id,
         p.name as person_name, p.slug as person_slug, p.photo_url as person_photo,
       c.name as company_name,
       (SELECT a.thumbnail_url FROM appearances a WHERE a.person_id = n.person_id ORDER BY a.published_at DESC LIMIT 1) as appearance_thumbnail
@@ -166,7 +166,7 @@ export async function getRecentNews(filters?: { category?: NewsCategory; limit?:
   const { rows } = await sql`
     SELECT
       n.id, n.person_id, n.company_id, n.category, n.headline, n.summary,
-      n.source_url, n.source_domain, n.published_at, n.discovered_at, n.confidence, n.og_image_url,
+      n.source_url, n.source_domain, n.published_at, n.discovered_at, n.confidence, n.og_image_url, n.story_id,
       p.name as person_name, p.slug as person_slug, p.photo_url as person_photo,
       c.name as company_name,
       (SELECT a.thumbnail_url FROM appearances a WHERE a.person_id = n.person_id ORDER BY a.published_at DESC LIMIT 1) as appearance_thumbnail
@@ -183,7 +183,7 @@ export async function getNewsForPerson(personId: string): Promise<NewsItem[]> {
   const { rows } = await sql`
     SELECT
       n.id, n.person_id, n.company_id, n.category, n.headline, n.summary,
-      n.source_url, n.source_domain, n.published_at, n.discovered_at, n.confidence, n.og_image_url,
+      n.source_url, n.source_domain, n.published_at, n.discovered_at, n.confidence, n.og_image_url, n.story_id,
       c.name as company_name
     FROM news_items n
     LEFT JOIN companies c ON n.company_id = c.id

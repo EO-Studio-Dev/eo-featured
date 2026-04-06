@@ -1,5 +1,5 @@
 import { getRecentNews } from "@/lib/queries";
-import { deduplicateNews } from "@/lib/news-dedup";
+import { deduplicateNewsByStoryId } from "@/lib/news-dedup";
 import { NewsGrid } from "./news-grid";
 import type { NewsItem } from "@/types/supabase";
 
@@ -28,11 +28,11 @@ export async function NewsSection() {
         Latest Updates
       </h2>
       <NewsGrid
-        allItems={deduplicateNews(allNews)}
-        fundingItems={deduplicateNews(fundingNews)}
-        acquisitionItems={deduplicateNews(acquisitionNews)}
-        ipoItems={deduplicateNews(ipoNews)}
-        launchItems={deduplicateNews(launchNews)}
+        allItems={deduplicateNewsByStoryId(allNews)}
+        fundingItems={deduplicateNewsByStoryId(fundingNews)}
+        acquisitionItems={deduplicateNewsByStoryId(acquisitionNews)}
+        ipoItems={deduplicateNewsByStoryId(ipoNews)}
+        launchItems={deduplicateNewsByStoryId(launchNews)}
       />
     </div>
   );

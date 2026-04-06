@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { NewsCard } from "./news-card";
 import { cn } from "@/lib/utils";
 import type { NewsCategory } from "@/types/supabase";
@@ -99,18 +99,39 @@ export function NewsGrid({ allItems, fundingItems, acquisitionItems, ipoItems, l
               <NewsCard key={item.id} item={item} />
             ))}
           </div>
-          {hasMore && (
-            <div className="mt-8 flex justify-center">
-              <button
-                onClick={loadMore}
-                disabled={loading}
-                className="border-[1.5px] border-border px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.05em] text-text-secondary transition-colors hover:border-foreground hover:bg-foreground hover:text-background disabled:opacity-50"
-              >
-                {loading ? "Loading..." : "Load More"}
-              </button>
-            </div>
-          )}
+          {hasMore && <LoadTrigger onVisible={loadMore} loading={loading} />}
         </>
+      )}
+    </div>
+  );
+}
+
+function LoadTrigger({ onVisible, loading }: { onVisible: () => void; loading: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loading) {
+          onVisible();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [onVisible, loading]);
+
+  return (
+    <div ref={ref} className="mt-8 flex justify-center py-4">
+      {loading && (
+        <span className="text-[11px] font-bold uppercase tracking-[0.05em] text-text-tertiary">
+          Loading...
+        </span>
       )}
     </div>
   );

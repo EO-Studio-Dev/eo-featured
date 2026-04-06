@@ -3,6 +3,7 @@ config({ path: ".env.local" });
 import { sql } from "@vercel/postgres";
 import { searchGoogleNews } from "../src/lib/news";
 import { categorize, computeConfidence, extractDomain } from "../src/lib/news-categorizer";
+import { buildSearchQuery, shouldSkipCompany, isHeadlineRelevant } from "../src/lib/news-filter";
 
 async function seed() {
   const { rows: people } = await sql`
@@ -17,14 +18,18 @@ async function seed() {
   let processed = 0;
 
   for (const person of people) {
-    const query = person.company_name
-      ? `"${person.name}" "${person.company_name}"`
-      : `"${person.name}"`;
+    if (shouldSkipCompany(person.company_name)) {
+      continue;
+    }
 
+    const query = buildSearchQuery(person.name, person.company_name);
     const results = await searchGoogleNews(query);
 
     let personNews = 0;
     for (const result of results) {
+      if (!isHeadlineRelevant(result.title, person.name, person.company_name)) {
+        continue;
+      }
       const domain = extractDomain(result.link);
       const category = categorize(result.title);
       const confidence = computeConfidence(

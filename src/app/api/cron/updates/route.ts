@@ -5,6 +5,7 @@ import { computeConfidence, extractDomain } from "@/lib/news-categorizer";
 import { buildSearchQueries, isHeadlineRelevant } from "@/lib/news-filter";
 import { analyzeHeadlinesBatched } from "@/lib/news-ai";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { convertNewsToMilestones } from "@/lib/news-to-milestones";
 
 const BATCH_SIZE = 20;
 
@@ -85,6 +86,14 @@ export async function POST(request: NextRequest) {
         } catch {
           // Skip duplicates
         }
+      }
+
+      // Convert significant news to timeline milestones
+      let newMilestones = 0;
+      try {
+        newMilestones += await convertNewsToMilestones(person.id);
+      } catch {
+        // milestone conversion is best-effort
       }
 
       await sql`UPDATE people SET updated_at = now() WHERE id = ${person.id}`;

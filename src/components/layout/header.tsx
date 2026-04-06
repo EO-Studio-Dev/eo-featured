@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChannelSwitcher } from "./channel-switcher";
 
 export function Header() {
   return (
@@ -10,19 +11,14 @@ export function Header() {
         >
           EO FEATURED
         </Link>
-        <nav className="flex items-center gap-6 text-[10px] uppercase tracking-[0.05em] text-text-tertiary">
-          <Link href="/" className="transition-colors hover:text-foreground">
-            People
-          </Link>
-          <a
-            href="https://youtube.com/@eoglobal"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="transition-colors hover:text-foreground"
-          >
-            YouTube
-          </a>
-        </nav>
+        <div className="flex items-center gap-6">
+          <ChannelSwitcher />
+          <nav className="flex items-center gap-6 text-[10px] uppercase tracking-[0.05em] text-text-tertiary">
+            <Link href="/" className="transition-colors hover:text-foreground">
+              People
+            </Link>
+          </nav>
+        </div>
       </div>
     </header>
   );

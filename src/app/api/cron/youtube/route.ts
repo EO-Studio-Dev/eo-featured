@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
-import { fetchAllVideos, parseVideoTitle, makeSlug } from "@/lib/youtube";
+import { fetchAllVideos, parseVideoTitle, makeSlug, CHANNELS, type Channel } from "@/lib/youtube";
 
 export async function POST(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
@@ -13,10 +13,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const videos = await fetchAllVideos();
     let newPeople = 0;
     let newAppearances = 0;
     let skipped = 0;
+    const channelKeys = Object.keys(CHANNELS) as Channel[];
+
+    for (const channel of channelKeys) {
+    const videos = await fetchAllVideos(channel);
 
     for (const video of videos) {
       const parsed = parseVideoTitle(video.title);
@@ -71,8 +74,8 @@ export async function POST(request: NextRequest) {
       } else {
         const slug = makeSlug(parsed.personName);
         const { rows: newPerson } = await sql`
-          INSERT INTO people (name, slug, role, company_id)
-          VALUES (${parsed.personName}, ${slug}, ${parsed.role}, ${companyId})
+          INSERT INTO people (name, slug, role, company_id, channel)
+          VALUES (${parsed.personName}, ${slug}, ${parsed.role}, ${companyId}, ${channel})
           RETURNING id
         `;
         personId = newPerson[0].id;
@@ -99,10 +102,11 @@ export async function POST(request: NextRequest) {
         )
       `;
     }
+    } // end channel loop
 
     return NextResponse.json({
       success: true,
-      total_videos: videos.length,
+      channels: channelKeys,
       new_people: newPeople,
       new_appearances: newAppearances,
       skipped,

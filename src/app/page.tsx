@@ -1,30 +1,21 @@
 import { Suspense } from "react";
 import { StatsBar } from "@/components/stats/stats-bar";
-import { FilterBar } from "@/components/filters/filter-bar";
-import { PersonGridSkeleton } from "@/components/ui/skeleton";
-import { PeopleSection } from "@/components/people/people-section";
 import { NewsSection } from "@/components/news/news-section";
 import { getStats } from "@/lib/queries";
-import type { CompanyStatus } from "@/types/supabase";
 
 interface HomePageProps {
   searchParams: Promise<{
-    status?: string;
-    search?: string;
-    sort?: string;
-    cursor?: string;
+    channel?: string;
   }>;
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = await searchParams;
-  const status = params.status as CompanyStatus | undefined;
-  const search = params.search;
-  const sort = (params.sort as "recent" | "name") || "recent";
+  const channel = params.channel || "en";
 
   let stats = { people_count: 0, company_count: 0, funding_count: 0, acquisition_count: 0 };
   try {
-    stats = await getStats();
+    stats = await getStats(channel);
   } catch {
     // DB not connected
   }
@@ -51,10 +42,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       {/* News Feed */}
       <div className="mt-16 border-t-[1.5px] border-border pt-6">
         <Suspense fallback={<NewsSkeleton />}>
-          <NewsSection />
+          <NewsSection channel={channel} />
         </Suspense>
       </div>
-
     </div>
   );
 }
@@ -63,8 +53,8 @@ function NewsSkeleton() {
   return (
     <div>
       <div className="mb-6 h-3 w-32 animate-pulse bg-elevated" />
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="border-[1.5px] border-border p-5">
             <div className="h-3 w-20 animate-pulse bg-elevated" />
             <div className="mt-3 h-5 w-full animate-pulse bg-elevated" />

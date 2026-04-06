@@ -1,4 +1,11 @@
-const CHANNEL_ID = "UClWTCPVi-AU9TeCN6FkGARg"; // EO Global
+export type Channel = "en" | "kr" | "vn";
+
+export const CHANNELS: Record<Channel, { id: string; label: string; youtube: string }> = {
+  en: { id: "UClWTCPVi-AU9TeCN6FkGARg", label: "EN", youtube: "https://youtube.com/@eoglobal" },
+  kr: { id: "UCQ2DWm5Md16Dc3xRwwhVE7Q", label: "KR", youtube: "https://youtube.com/@eo_korea" },
+  vn: { id: "UCJkFp0bQi2VTQyi2-P80yxA", label: "VN", youtube: "https://youtube.com/@eo_vietnam" },
+};
+
 const MAX_RESULTS = 50;
 
 interface YouTubeVideo {
@@ -8,7 +15,7 @@ interface YouTubeVideo {
   thumbnailUrl: string;
 }
 
-export async function fetchRecentVideos(pageToken?: string): Promise<{
+export async function fetchRecentVideos(channel: Channel = "en", pageToken?: string): Promise<{
   videos: YouTubeVideo[];
   nextPageToken: string | null;
 }> {
@@ -17,7 +24,7 @@ export async function fetchRecentVideos(pageToken?: string): Promise<{
 
   const params = new URLSearchParams({
     part: "snippet",
-    channelId: CHANNEL_ID,
+    channelId: CHANNELS[channel].id,
     maxResults: String(MAX_RESULTS),
     order: "date",
     type: "video",
@@ -57,12 +64,12 @@ export async function fetchRecentVideos(pageToken?: string): Promise<{
   };
 }
 
-export async function fetchAllVideos(): Promise<YouTubeVideo[]> {
+export async function fetchAllVideos(channel: Channel = "en"): Promise<YouTubeVideo[]> {
   const allVideos: YouTubeVideo[] = [];
   let pageToken: string | undefined;
 
   do {
-    const { videos, nextPageToken } = await fetchRecentVideos(pageToken);
+    const { videos, nextPageToken } = await fetchRecentVideos(channel, pageToken);
     allVideos.push(...videos);
     pageToken = nextPageToken || undefined;
     // Safety limit

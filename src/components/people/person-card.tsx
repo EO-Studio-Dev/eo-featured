@@ -11,7 +11,7 @@ export interface PersonCardData {
   name: string;
   slug: string;
   photo_url: string | null;
-  current_role: string | null;
+  role: string | null;
   company?: { name: string; status: CompanyStatus };
   appearances: { count: number }[];
 }
@@ -25,46 +25,46 @@ export function PersonCard({ person, index }: PersonCardProps) {
   const status = (person.company?.status || "active") as CompanyStatus;
   const appearanceCount = person.appearances?.[0]?.count || 0;
 
-  const delay = Math.min(index * 0.05, 0.5);
+  const delay = Math.min(index * 0.04, 0.4);
 
   return (
     <div
       style={{
-        animation: `fadeSlideUp 0.3s ease-out ${delay}s both`,
+        animation: `fadeSlideUp 0.25s ease-out ${delay}s both`,
       }}
     >
       <Link
         href={`/people/${person.slug}`}
-        aria-label={`${person.name}${person.company?.name ? ` — ${person.company.name}` : ""} 프로필 보기`}
-        className="group block rounded-xl border border-border bg-card p-5 transition-all will-change-transform md:hover:border-accent/30 md:hover:shadow-[0_0_20px_var(--color-accent-glow,rgba(96,165,250,0.1))] md:hover:scale-[1.02]"
+        aria-label={`View ${person.name}${person.company?.name ? ` — ${person.company.name}` : ""} profile`}
+        className="group block border-[1.5px] border-border bg-card p-5 transition-colors hover:border-foreground"
       >
-        <div className="flex items-center gap-4">
+        <div className="flex items-start gap-4">
           <Avatar
             src={person.photo_url}
             name={person.name}
             size="md"
           />
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-lg font-semibold text-foreground">
+            <h3 className="font-title text-[28px] font-semibold tracking-[-0.03em] text-foreground">
               {person.name}
             </h3>
-            <p className="truncate text-sm text-text-secondary">
+            <p className="mt-0.5 text-[11px] uppercase tracking-[0.05em] text-text-tertiary">
               {person.company?.name && (
                 <>
                   {person.company.name}
-                  {person.current_role && ` · ${person.current_role}`}
+                  {person.role && ` · ${person.role}`}
                 </>
               )}
             </p>
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-3 flex items-center gap-3">
               <StatusBadge status={status} />
               {appearanceCount > 0 && (
                 <span
-                  className="inline-flex items-center gap-1 text-xs text-text-tertiary"
-                  aria-label={`EO 출연 ${appearanceCount}회`}
+                  className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.05em] text-text-tertiary"
+                  aria-label={`${appearanceCount} EO appearances`}
                 >
                   <Video className="h-3 w-3" aria-hidden="true" />
-                  {appearanceCount}회
+                  {appearanceCount}x
                 </span>
               )}
             </div>

@@ -15,15 +15,13 @@ export interface Person {
   name: string;
   slug: string;
   photo_url: string | null;
-  current_role: string | null;
-  current_company_id: string | null;
+  role: string | null;
+  company_id: string | null;
   created_at: string;
   updated_at: string;
-  // joined
   company?: Company;
   appearances?: Appearance[];
   milestones?: Milestone[];
-  appearance_count?: number;
 }
 
 export interface Company {
@@ -55,19 +53,40 @@ export interface Milestone {
   confidence: number;
 }
 
-export interface StatsCache {
+export type NewsCategory =
+  | "funding"
+  | "acquisition"
+  | "ipo"
+  | "launch"
+  | "award"
+  | "hire"
+  | "other";
+
+export interface NewsItem {
   id: string;
-  key: string;
-  value: number;
-  updated_at: string;
+  person_id: string | null;
+  company_id: string | null;
+  category: NewsCategory;
+  headline: string;
+  summary: string | null;
+  source_url: string;
+  source_domain: string | null;
+  published_at: string | null;
+  discovered_at: string;
+  confidence: number;
+  og_image_url: string | null;
+  // Joined
+  person_name?: string;
+  person_slug?: string;
+  person_photo?: string | null;
+  company_name?: string;
+  appearance_thumbnail?: string | null;
 }
 
 export interface PeopleFilters {
   status?: CompanyStatus;
-  industry?: string;
-  year?: number;
   search?: string;
-  sort?: "recent" | "funding" | "name";
+  sort?: "recent" | "name";
   cursor?: string;
   limit?: number;
 }

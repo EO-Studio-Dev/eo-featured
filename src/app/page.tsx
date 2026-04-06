@@ -3,15 +3,9 @@ import { StatsBar } from "@/components/stats/stats-bar";
 import { FilterBar } from "@/components/filters/filter-bar";
 import { PersonGridSkeleton } from "@/components/ui/skeleton";
 import { PeopleSection } from "@/components/people/people-section";
+import { NewsSection } from "@/components/news/news-section";
+import { getStats } from "@/lib/queries";
 import type { CompanyStatus } from "@/types/supabase";
-
-// Mock data for initial development
-const mockStats = {
-  people_count: 324,
-  company_count: 287,
-  total_funding: 2_400_000_000,
-  ipo_count: 12,
-};
 
 interface HomePageProps {
   searchParams: Promise<{
@@ -28,40 +22,57 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const search = params.search;
   const sort = (params.sort as "recent" | "name") || "recent";
 
+  let stats = { people_count: 0, company_count: 0, funding_count: 0, acquisition_count: 0 };
+  try {
+    stats = await getStats();
+  } catch {
+    // DB not connected
+  }
+
   return (
-    <div className="mx-auto max-w-[1200px] px-4 py-8 md:py-12">
+    <div className="mx-auto max-w-[1400px] px-5 py-10">
       {/* Hero */}
-      <div
-        className="mb-8 md:mb-12 rounded-2xl px-8 py-10 md:py-14"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 60% at 30% 40%, rgba(96,165,250,0.08) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 70% 70%, rgba(96,165,250,0.05) 0%, transparent 60%)",
-        }}
-      >
-        <h1 className="font-serif text-3xl font-bold md:text-5xl">
-          EO Featured
-        </h1>
-        <p className="mt-2 text-sm text-text-secondary md:text-base">
-          EO가 발견한 사람들의 성장 기록
-        </p>
+      <div className="grid grid-cols-12 gap-5">
+        <div className="col-span-12 lg:col-span-8">
+          <h1 className="font-serif text-[64px] italic leading-[0.9] tracking-[-1.5px] text-foreground md:text-[96px] lg:text-[128px]">
+            EO<br />
+            <span className="text-accent">FEATURED</span>
+          </h1>
+          <p className="mt-6 max-w-[500px] text-[13px] leading-[1.4] text-text-secondary">
+            Tracking the growth stories of people featured on the EO YouTube channel.
+            Automatically collected and updated by AI from public sources.
+          </p>
+        </div>
+        <div className="col-span-12 lg:col-span-4">
+          <StatsBar stats={stats} />
+        </div>
       </div>
 
-      {/* Stats */}
-      <div className="mb-8 md:mb-10">
-        <StatsBar stats={mockStats} />
-      </div>
-
-      {/* Filters */}
-      <div className="mb-6 md:mb-8">
-        <Suspense>
-          <FilterBar />
+      {/* News Feed */}
+      <div className="mt-16 border-t-[1.5px] border-border pt-6">
+        <Suspense fallback={<NewsSkeleton />}>
+          <NewsSection />
         </Suspense>
       </div>
 
-      {/* People Grid */}
-      <Suspense fallback={<PersonGridSkeleton />}>
-        <PeopleSection status={status} search={search} sort={sort} />
-      </Suspense>
+    </div>
+  );
+}
+
+function NewsSkeleton() {
+  return (
+    <div>
+      <div className="mb-6 h-3 w-32 animate-pulse bg-elevated" />
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="border-[1.5px] border-border p-5">
+            <div className="h-3 w-20 animate-pulse bg-elevated" />
+            <div className="mt-3 h-5 w-full animate-pulse bg-elevated" />
+            <div className="mt-2 h-5 w-3/4 animate-pulse bg-elevated" />
+            <div className="mt-3 h-3 w-40 animate-pulse bg-elevated" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

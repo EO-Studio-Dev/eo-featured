@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPeople } from "@/lib/queries";
 import type { CompanyStatus, PeopleFilters } from "@/types/supabase";
 
 export async function GET(request: NextRequest) {
@@ -7,26 +8,16 @@ export async function GET(request: NextRequest) {
   const filters: PeopleFilters = {
     status: (searchParams.get("status") as CompanyStatus) || undefined,
     search: searchParams.get("search") || undefined,
-    sort:
-      (searchParams.get("sort") as PeopleFilters["sort"]) || "recent",
+    sort: (searchParams.get("sort") as PeopleFilters["sort"]) || "recent",
     cursor: searchParams.get("cursor") || undefined,
     limit: Number(searchParams.get("limit")) || 24,
   };
 
   try {
-    // TODO: Replace with actual Supabase query
-    // const { people, nextCursor } = await getPeople(filters);
-
-    return NextResponse.json({
-      people: [],
-      nextCursor: null,
-      filters,
-    });
+    const { people, nextCursor } = await getPeople(filters);
+    return NextResponse.json({ people, nextCursor });
   } catch (error) {
     console.error("People API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -1,16 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Users, Building2, TrendingUp, Landmark } from "lucide-react";
-import { formatNumber } from "@/lib/utils";
-
-interface StatCardProps {
-  icon: React.ReactNode;
-  value: number;
-  label: string;
-  tooltip: string;
-  format?: (n: number) => string;
-}
 
 function CountUp({ target, format }: { target: number; format?: (n: number) => string }) {
   const [count, setCount] = useState(0);
@@ -58,19 +48,9 @@ function CountUp({ target, format }: { target: number; format?: (n: number) => s
   }, [inView, target]);
 
   return (
-    <span ref={ref} className="font-mono text-3xl font-bold tabular-nums text-foreground md:text-4xl">
+    <span ref={ref} className="font-serif text-[40px] tabular-nums text-foreground">
       {format ? format(count) : count.toLocaleString()}
     </span>
-  );
-}
-
-function StatCard({ icon, value, label, tooltip, format }: StatCardProps) {
-  return (
-    <div className="group relative rounded-xl border border-border bg-card p-5" title={tooltip}>
-      <div className="mb-2 text-text-tertiary">{icon}</div>
-      <CountUp target={value} format={format} />
-      <p className="mt-1 text-sm text-text-tertiary">{label}</p>
-    </div>
   );
 }
 
@@ -80,35 +60,23 @@ interface StatsBarProps {
 
 export function StatsBar({ stats }: StatsBarProps) {
   return (
-    <div
-      className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4"
-      style={{ animation: "fadeSlideUp 0.5s ease-out both" }}
-    >
-      <StatCard
-        icon={<Users className="h-5 w-5" />}
-        value={stats.people_count || 0}
-        label="인물"
-        tooltip="EO 채널에 출연한 총 인물 수"
-      />
-      <StatCard
-        icon={<Building2 className="h-5 w-5" />}
-        value={stats.company_count || 0}
-        label="기업"
-        tooltip="EO 출연 인물이 속한 기업 수"
-      />
-      <StatCard
-        icon={<TrendingUp className="h-5 w-5" />}
-        value={stats.total_funding || 0}
-        label="투자유치"
-        tooltip="EO 출연 인물 소속 기업 누적 투자유치"
-        format={formatNumber}
-      />
-      <StatCard
-        icon={<Landmark className="h-5 w-5" />}
-        value={stats.ipo_count || 0}
-        label="IPO"
-        tooltip="IPO/상장 완료 기업 수"
-      />
+    <div className="grid grid-cols-2 gap-0">
+      {[
+        { value: stats.people_count || 0, label: "FEATURED", format: undefined },
+        { value: stats.company_count || 0, label: "COMPANIES", format: undefined },
+        { value: stats.funding_count || 0, label: "FUNDING NEWS", format: undefined },
+        { value: stats.acquisition_count || 0, label: "M&A NEWS", format: undefined },
+      ].map((stat, i) => (
+        <div
+          key={stat.label}
+          className={`border-[1.5px] border-border p-5 ${i % 2 === 0 ? "border-r-0" : ""} ${i < 2 ? "border-b-0" : ""}`}
+        >
+          <CountUp target={stat.value} format={stat.format} />
+          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
+            {stat.label}
+          </p>
+        </div>
+      ))}
     </div>
   );
 }

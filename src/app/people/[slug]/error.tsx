@@ -15,24 +15,26 @@ export default function PersonError({ error, reset }: ErrorProps) {
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
-      <h2 className="font-mono text-lg text-foreground">페이지를 불러올 수 없습니다</h2>
-      <p className="text-sm text-text-tertiary">
+      <h2 className="text-[13px] font-bold uppercase tracking-[0.05em] text-foreground">
+        Could not load page
+      </h2>
+      <p className="text-[11px] text-text-tertiary">
         {process.env.NODE_ENV === "development"
-          ? error.message || "인물 정보를 가져오는 중 오류가 발생했습니다."
-          : "인물 정보를 가져오는 중 오류가 발생했습니다."}
+          ? error.message || "Error loading person data."
+          : "Error loading person data."}
       </p>
       <div className="flex gap-3">
         <button
           onClick={reset}
-          className="rounded-lg border border-border-active px-4 py-2 text-sm text-text-secondary transition-colors hover:border-border-hover hover:text-foreground"
+          className="border-[1.5px] border-border px-4 py-2 text-[10px] font-bold uppercase tracking-[0.05em] text-text-secondary transition-colors hover:border-foreground hover:bg-foreground hover:text-background"
         >
-          다시 시도
+          Try Again
         </button>
         <Link
           href="/"
-          className="rounded-lg border border-border-active px-4 py-2 text-sm text-text-secondary transition-colors hover:border-border-hover hover:text-foreground"
+          className="border-[1.5px] border-border px-4 py-2 text-[10px] font-bold uppercase tracking-[0.05em] text-text-secondary transition-colors hover:border-foreground hover:bg-foreground hover:text-background"
         >
-          홈으로
+          Home
         </Link>
       </div>
     </div>

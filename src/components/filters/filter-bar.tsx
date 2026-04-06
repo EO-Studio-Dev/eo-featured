@@ -2,21 +2,20 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CompanyStatus } from "@/types/supabase";
 
 const STATUS_TABS: { value: CompanyStatus | "all"; label: string }[] = [
-  { value: "all", label: "전체" },
-  { value: "active", label: "운영중" },
+  { value: "all", label: "ALL" },
+  { value: "active", label: "ACTIVE" },
   { value: "ipo", label: "IPO" },
-  { value: "acquired", label: "인수됨" },
-  { value: "closed", label: "폐업" },
+  { value: "acquired", label: "ACQUIRED" },
+  { value: "closed", label: "CLOSED" },
 ];
 
 const SORT_OPTIONS = [
-  { value: "recent", label: "최근 출연순" },
-  { value: "name", label: "이름순" },
+  { value: "recent", label: "Recent" },
+  { value: "name", label: "Name" },
 ];
 
 export function FilterBar() {
@@ -84,57 +83,42 @@ export function FilterBar() {
 
   return (
     <div className={cn("space-y-4 transition-opacity", isPending && "opacity-50 pointer-events-none")}>
-      {/* Status tabs */}
-      <div
-        role="tablist"
-        aria-label="회사 상태 필터"
-        className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
-        onKeyDown={handleTabKeyDown}
-      >
-        {STATUS_TABS.map((tab) => (
-          <button
-            key={tab.value}
-            role="tab"
-            aria-selected={activeStatus === tab.value}
-            tabIndex={activeStatus === tab.value ? 0 : -1}
-            onClick={() => updateParams("status", tab.value)}
-            className={cn(
-              "whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-              activeStatus === tab.value
-                ? "border-foreground bg-foreground text-background"
-                : "border-border-active text-text-secondary hover:border-border-hover hover:text-foreground"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Search + Sort */}
-      <div className="flex gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" aria-hidden="true" />
-          <label htmlFor="people-search" className="sr-only">
-            인물 또는 기업 검색
-          </label>
-          <input
-            id="people-search"
-            type="text"
-            value={searchValue}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="인물 또는 기업 검색..."
-            className="w-full rounded-lg border border-border-active bg-input-bg py-2 pl-10 pr-4 text-sm text-foreground placeholder-text-tertiary transition-colors focus:border-accent/50 focus:outline-none"
-          />
+      {/* Status tabs + Sort */}
+      <div className="flex items-center justify-between gap-4">
+        <div
+          role="tablist"
+          aria-label="Company status filter"
+          className="flex gap-0 overflow-x-auto scrollbar-hide"
+          onKeyDown={handleTabKeyDown}
+        >
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              role="tab"
+              aria-selected={activeStatus === tab.value}
+              tabIndex={activeStatus === tab.value ? 0 : -1}
+              onClick={() => updateParams("status", tab.value)}
+              className={cn(
+                "whitespace-nowrap border-[1.5px] border-border px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.05em] transition-colors -ml-[1.5px] first:ml-0",
+                activeStatus === tab.value
+                  ? "border-foreground bg-foreground text-background"
+                  : "text-text-tertiary hover:border-foreground hover:text-foreground"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
+
         <label htmlFor="sort-select" className="sr-only">
-          정렬 기준
+          Sort by
         </label>
         <select
           id="sort-select"
           value={activeSort}
           onChange={(e) => updateParams("sort", e.target.value)}
-          aria-label="정렬 기준"
-          className="rounded-lg border border-border-active bg-input-bg px-3 py-2 text-sm text-text-secondary focus:border-accent/50 focus:outline-none"
+          aria-label="Sort by"
+          className="border-[1.5px] border-border bg-background px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.05em] text-text-secondary focus:border-foreground focus:outline-none"
         >
           {SORT_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -142,6 +126,21 @@ export function FilterBar() {
             </option>
           ))}
         </select>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <label htmlFor="people-search" className="sr-only">
+          Search people or companies
+        </label>
+        <input
+          id="people-search"
+          type="text"
+          value={searchValue}
+          onChange={(e) => handleSearch(e.target.value)}
+          placeholder="Search..."
+          className="w-full border-[1.5px] border-border bg-background px-4 py-2.5 text-[13px] text-foreground placeholder-text-tertiary transition-colors focus:border-foreground focus:outline-none"
+        />
       </div>
     </div>
   );

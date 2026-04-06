@@ -26,19 +26,19 @@ export function PersonGrid({
 
   if (people.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <SearchX className="mb-4 h-12 w-12 text-text-tertiary" />
-        <p className="text-lg font-medium text-text-secondary">
-          검색 결과가 없습니다
+      <div className="flex flex-col items-center justify-center border-[1.5px] border-border py-20 text-center">
+        <SearchX className="mb-4 h-10 w-10 text-text-tertiary" />
+        <p className="text-[13px] font-bold uppercase tracking-[0.05em] text-text-secondary">
+          No results found
         </p>
-        <p className="mt-1 text-sm text-text-tertiary">
-          다른 검색어나 필터를 시도해보세요
+        <p className="mt-1 text-[11px] text-text-tertiary">
+          Try a different search term or filter
         </p>
         <button
           onClick={() => router.push("/")}
-          className="mt-6 rounded-lg border border-border-active bg-elevated px-5 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-border-hover hover:text-foreground"
+          className="mt-6 border-[1.5px] border-border px-5 py-2 text-[10px] font-bold uppercase tracking-[0.05em] text-text-secondary transition-colors hover:border-foreground hover:bg-foreground hover:text-background"
         >
-          필터 초기화
+          Reset Filters
         </button>
       </div>
     );
@@ -46,7 +46,7 @@ export function PersonGrid({
 
   return (
     <div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 md:gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {people.map((person, i) => (
           <PersonCard key={person.id} person={person} index={i} />
         ))}
@@ -55,10 +55,10 @@ export function PersonGrid({
         <div className="mt-8 flex justify-center">
           <button
             onClick={onLoadMore}
-            aria-label="더 많은 인물 보기"
-            className="rounded-lg border border-border-active bg-elevated px-6 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:border-border-hover hover:text-foreground"
+            aria-label="Load more people"
+            className="border-[1.5px] border-border px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.05em] text-text-secondary transition-colors hover:border-foreground hover:bg-foreground hover:text-background"
           >
-            더 보기
+            Load More
           </button>
         </div>
       )}

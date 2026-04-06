@@ -32,11 +32,12 @@ export function Avatar({ src, name, size = "md", className }: AvatarProps) {
         role="img"
         aria-label={name}
         className={cn(
-          "flex items-center justify-center rounded-full font-semibold text-white",
+          "flex shrink-0 items-center justify-center font-bold text-foreground",
           sizeMap[size],
           getAvatarColor(name),
           className
         )}
+        style={{ filter: "grayscale(1) contrast(1.1)" }}
       >
         <span aria-hidden="true">{getInitials(name)}</span>
       </div>
@@ -50,7 +51,8 @@ export function Avatar({ src, name, size = "md", className }: AvatarProps) {
       width={imageSizeMap[size]}
       height={imageSizeMap[size]}
       sizes={size === "sm" ? "40px" : size === "md" ? "64px" : "96px"}
-      className={cn("rounded-full object-cover", sizeMap[size], className)}
+      className={cn("shrink-0 object-cover", sizeMap[size], className)}
+      style={{ filter: "grayscale(1) contrast(1.1)" }}
       onError={() => setError(true)}
     />
   );

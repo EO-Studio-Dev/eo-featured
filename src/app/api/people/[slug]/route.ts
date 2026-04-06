@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPersonBySlug } from "@/lib/queries";
 
 export async function GET(
   request: NextRequest,
@@ -7,18 +8,13 @@ export async function GET(
   const { slug } = await params;
 
   try {
-    // TODO: Replace with actual Supabase query
-    // const person = await getPersonBySlug(slug);
-
-    return NextResponse.json({
-      person: null,
-      slug,
-    });
+    const person = await getPersonBySlug(slug);
+    if (!person) {
+      return NextResponse.json({ error: "Person not found" }, { status: 404 });
+    }
+    return NextResponse.json({ person });
   } catch (error) {
     console.error("Person API error:", error);
-    return NextResponse.json(
-      { error: "Person not found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

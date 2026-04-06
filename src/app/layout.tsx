@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Space_Mono, Instrument_Serif } from "next/font/google";
+import { Space_Mono, Instrument_Serif, Inter } from "next/font/google";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import "./globals.css";
@@ -18,13 +18,20 @@ const instrumentSerif = Instrument_Serif({
   display: "swap",
 });
 
+const inter = Inter({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "EO Featured — EO가 발견한 사람들의 성장 기록",
+  title: "EO Featured — Tracking the growth of people discovered by EO",
   description:
-    "EO 유튜브 채널에 출연한 인물들의 성장을 자동으로 추적하는 데이터 대시보드",
+    "A data dashboard that automatically tracks the growth of people featured on the EO YouTube channel",
   openGraph: {
     title: "EO Featured",
-    description: "EO가 발견한 사람들의 성장 기록",
+    description: "Tracking the growth of people discovered by EO",
     type: "website",
   },
 };
@@ -36,8 +43,8 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="ko"
-      className={`${spaceMono.variable} ${instrumentSerif.variable}`}
+      lang="en"
+      className={`${spaceMono.variable} ${instrumentSerif.variable} ${inter.variable}`}
     >
       <head>
         <link

@@ -5,14 +5,14 @@ import { cn } from "@/lib/utils";
 import type { Milestone, MilestoneEventType } from "@/types/supabase";
 
 const eventConfig: Record<MilestoneEventType, { icon: React.ElementType; color: string }> = {
-  eo_appearance: { icon: Video, color: "text-accent bg-accent/20" },
-  funding: { icon: TrendingUp, color: "text-green-400 bg-green-500/20" },
-  ipo: { icon: Rocket, color: "text-purple-400 bg-purple-500/20" },
-  acquisition: { icon: Building2, color: "text-amber-400 bg-amber-500/20" },
-  launch: { icon: Zap, color: "text-cyan-400 bg-cyan-500/20" },
-  award: { icon: Award, color: "text-yellow-400 bg-yellow-500/20" },
-  expansion: { icon: TrendingUp, color: "text-emerald-400 bg-emerald-500/20" },
-  other: { icon: Circle, color: "text-neutral-400 bg-neutral-500/20" },
+  eo_appearance: { icon: Video, color: "text-accent" },
+  funding: { icon: TrendingUp, color: "text-[#00F7AD]" },
+  ipo: { icon: Rocket, color: "text-[#2D43FF]" },
+  acquisition: { icon: Building2, color: "text-[#FDE047]" },
+  launch: { icon: Zap, color: "text-foreground" },
+  award: { icon: Award, color: "text-[#FDE047]" },
+  expansion: { icon: TrendingUp, color: "text-foreground" },
+  other: { icon: Circle, color: "text-text-tertiary" },
 };
 
 interface TimelineProps {
@@ -27,7 +27,7 @@ export function Timeline({ milestones }: TimelineProps) {
   return (
     <div className="relative space-y-0">
       {/* Vertical line */}
-      <div className="absolute left-5 top-0 h-full w-px bg-border" />
+      <div className="absolute left-[18px] top-0 h-full w-[2px] bg-border" />
 
       {sorted.map((milestone, i) => {
         const config = eventConfig[milestone.event_type];
@@ -40,36 +40,36 @@ export function Timeline({ milestones }: TimelineProps) {
             key={milestone.id}
             className={cn(
               "relative flex gap-4 py-3",
-              isUnverified && "border-l-2 border-dashed border-amber-500/40 pl-2"
+              isUnverified && "border-l-[1.5px] border-dashed border-[#FDE047]/40 pl-2"
             )}
             style={{ animation: `fadeSlideLeft 0.3s ease-out ${i * 0.05}s both` }}
           >
-            {/* Icon */}
+            {/* Dot */}
             <div
               className={cn(
-                "relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+                "relative z-10 flex h-9 w-9 shrink-0 items-center justify-center border-[1.5px] border-border bg-background",
                 config.color,
-                isEO && "ring-2 ring-accent/50"
+                isEO && "border-accent"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-3.5 w-3.5" />
             </div>
 
             {/* Content */}
             <div className="min-w-0 flex-1 pt-1">
-              <p className="font-mono text-xs text-text-tertiary">
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
                 {new Date(milestone.date).toLocaleDateString("ko-KR", {
                   year: "numeric",
                   month: "long",
                 })}
               </p>
               <p className={cn(
-                "mt-0.5 text-sm",
-                isEO ? "font-semibold text-accent" : "text-text-secondary"
+                "mt-0.5 text-[13px]",
+                isEO ? "font-bold text-accent" : "text-text-secondary"
               )}>
                 {milestone.description}
                 {isUnverified && (
-                  <span className="ml-2 rounded bg-amber-500/10 px-1.5 py-0.5 text-xs text-amber-400/80">(미확인)</span>
+                  <span className="ml-2 border-[1.5px] border-[#FDE047]/40 px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#FDE047]/80">(미확인)</span>
                 )}
               </p>
               {milestone.source_url && /^https?:\/\//.test(milestone.source_url) && (
@@ -78,9 +78,9 @@ export function Timeline({ milestones }: TimelineProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`출처: ${milestone.description}`}
-                  className="mt-1 inline-block text-xs text-text-tertiary hover:text-text-secondary"
+                  className="mt-1 inline-block text-[10px] uppercase tracking-[0.05em] text-text-tertiary hover:text-foreground"
                 >
-                  출처
+                  출처 ↗
                 </a>
               )}
             </div>

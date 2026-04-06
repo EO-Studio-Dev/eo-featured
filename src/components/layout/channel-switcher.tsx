@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
@@ -13,6 +13,7 @@ const CHANNELS = [
 export function ChannelSwitcher() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const active = searchParams.get("channel") || "en";
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -34,7 +35,7 @@ export function ChannelSwitcher() {
     } else {
       params.set("channel", channel);
     }
-    router.push(`/?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
     setOpen(false);
   };
 

@@ -4,7 +4,7 @@ import type { Person, Company, Appearance, Milestone, PeopleFilters, CompanyStat
 const PAGE_SIZE = 24;
 
 export async function getPeople(filters: PeopleFilters = {}) {
-  const limit = filters.limit || PAGE_SIZE;
+  const limit = Math.min(filters.limit || PAGE_SIZE, 100);
   const conditions: string[] = [];
   const values: (string | number)[] = [];
   let paramIdx = 1;
@@ -42,8 +42,8 @@ export async function getPeople(filters: PeopleFilters = {}) {
     LEFT JOIN companies c ON p.company_id = c.id
     ${where}
     ORDER BY ${orderBy}
-    LIMIT ${limit}`,
-    values
+    LIMIT $${paramIdx}`,
+    [...values, limit]
   );
 
   const people = rows.map(mapPersonRow);

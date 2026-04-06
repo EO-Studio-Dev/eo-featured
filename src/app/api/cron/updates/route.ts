@@ -77,8 +77,8 @@ export async function POST(request: NextRequest) {
 
         try {
           const { rowCount } = await sql`
-            INSERT INTO news_items (person_id, company_id, category, headline, source_url, source_domain, published_at, confidence)
-            VALUES (${person.id}, ${person.company_id}, ${category}, ${result.title}, ${result.link}, ${domain}, ${result.pubDate}, ${confidence})
+            INSERT INTO news_items (person_id, company_id, category, headline, source_url, source_domain, published_at, confidence, story_id)
+            VALUES (${person.id}, ${person.company_id}, ${category}, ${result.title}, ${result.link}, ${domain}, ${result.pubDate}, ${confidence}, ${storyId})
             ON CONFLICT (person_id, source_url) DO NOTHING
           `;
           if (rowCount && rowCount > 0) totalNews++;

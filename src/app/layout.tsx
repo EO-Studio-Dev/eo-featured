@@ -46,13 +46,7 @@ export default function RootLayout({
       lang="en"
       className={`${spaceMono.variable} ${instrumentSerif.variable} ${inter.variable}`}
     >
-      <head>
-        <link
-          rel="stylesheet"
-          crossOrigin="anonymous"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-        />
-      </head>
+      <head />
       <body className="flex min-h-screen flex-col bg-background text-foreground">
         <Header />
         <main className="flex-1">{children}</main>

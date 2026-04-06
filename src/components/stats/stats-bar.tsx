@@ -54,8 +54,15 @@ function CountUp({ target, format }: { target: number; format?: (n: number) => s
   );
 }
 
+interface Stats {
+  people_count: number;
+  company_count: number;
+  funding_count: number;
+  acquisition_count: number;
+}
+
 interface StatsBarProps {
-  stats: Record<string, number>;
+  stats: Stats;
 }
 
 export function StatsBar({ stats }: StatsBarProps) {

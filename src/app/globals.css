@@ -31,6 +31,15 @@
   --color-status-closed-bg: transparent;
   --color-status-closed-text: #666666;
   --color-status-closed-border: #666666;
+
+  /* Category colors */
+  --color-category-funding: #00F7AD;
+  --color-category-acquisition: #FDE047;
+  --color-category-ipo: #2D43FF;
+  --color-category-launch: #E8E8E8;
+  --color-category-award: #FDE047;
+  --color-category-hire: #999999;
+  --color-category-other: #8A8A8A;
 }
 
 .font-title {

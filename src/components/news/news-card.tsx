@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { CategoryBadge } from "@/components/ui/category-badge";
@@ -21,6 +22,40 @@ function formatTime(dateStr: string | null): string {
 
 function stripSource(headline: string): string {
   return headline.replace(/\s[-–—]\s[^-–—]+$/, "");
+}
+
+function highlightKeywords(
+  text: string,
+  personName: string | undefined,
+  companyName: string | undefined,
+): React.ReactNode {
+  if (!personName && !companyName) return text;
+
+  // Build list of keywords to highlight (longer first to avoid partial matches)
+  const keywords: string[] = [];
+  if (companyName) keywords.push(companyName);
+  if (personName) keywords.push(personName);
+  // Also add last name
+  if (personName) {
+    const parts = personName.split(/\s+/);
+    if (parts.length >= 2) keywords.push(parts[parts.length - 1]);
+  }
+  keywords.sort((a, b) => b.length - a.length);
+
+  // Build regex
+  const escaped = keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const regex = new RegExp(`(${escaped.join("|")})`, "gi");
+
+  const parts = text.split(regex);
+  if (parts.length === 1) return text;
+
+  return parts.map((part, i) => {
+    const isMatch = keywords.some(k => part.toLowerCase() === k.toLowerCase());
+    if (isMatch) {
+      return <span key={i} className="underline decoration-accent/50 underline-offset-4">{part}</span>;
+    }
+    return part;
+  });
 }
 
 const SOURCE_DOMAIN_MAP: Record<string, string> = {
@@ -103,7 +138,7 @@ export function NewsCard({ item }: { item: DeduplicatedNewsItem }) {
         className="mt-4 block"
       >
         <h3 className="font-serif text-[36px] leading-[1.15] tracking-[0] text-foreground hover:text-accent">
-          {stripSource(item.headline)}
+          {highlightKeywords(stripSource(item.headline), item.person_name, item.company_name)}
         </h3>
       </a>
 

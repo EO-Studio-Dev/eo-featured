@@ -69,13 +69,15 @@ export function shouldSkipCompany(companyName: string | null): boolean {
 }
 
 /**
- * Build search query with appropriate specificity.
+ * Build search queries — returns multiple queries to run.
+ * One for person, one for company (if non-generic).
  */
-export function buildSearchQuery(personName: string, companyName: string | null): string {
-  if (!companyName || shouldSkipCompany(companyName)) {
-    return `"${personName}"`;
+export function buildSearchQueries(personName: string, companyName: string | null): string[] {
+  const queries = [`"${personName}"`];
+  if (companyName && !shouldSkipCompany(companyName)) {
+    queries.push(`"${companyName}"`);
   }
-  return `"${personName}" "${companyName}"`;
+  return queries;
 }
 
 // ---- Layer 2: Headline relevance ----

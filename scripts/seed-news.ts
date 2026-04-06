@@ -3,7 +3,7 @@ config({ path: ".env.local" });
 import { sql } from "@vercel/postgres";
 import { searchGoogleNews } from "../src/lib/news";
 import { categorize, computeConfidence, extractDomain } from "../src/lib/news-categorizer";
-import { buildSearchQuery, shouldSkipCompany, isHeadlineRelevant } from "../src/lib/news-filter";
+import { buildSearchQueries, shouldSkipCompany, isHeadlineRelevant } from "../src/lib/news-filter";
 
 async function seed() {
   const { rows: people } = await sql`
@@ -22,8 +22,14 @@ async function seed() {
       continue;
     }
 
-    const query = buildSearchQuery(person.name, person.company_name);
-    const results = await searchGoogleNews(query);
+    const queries = buildSearchQueries(person.name, person.company_name);
+    const allResults = [];
+    for (const q of queries) {
+      const r = await searchGoogleNews(q);
+      allResults.push(...r);
+    }
+    const seen = new Set<string>();
+    const results = allResults.filter(r => { if (seen.has(r.link)) return false; seen.add(r.link); return true; });
 
     let personNews = 0;
     for (const result of results) {

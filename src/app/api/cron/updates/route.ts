@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
 import { searchGoogleNews } from "@/lib/news";
 import { categorize, computeConfidence, extractDomain } from "@/lib/news-categorizer";
-import { buildSearchQuery, isHeadlineRelevant } from "@/lib/news-filter";
+import { buildSearchQueries, isHeadlineRelevant, shouldSkipCompany } from "@/lib/news-filter";
 
 const BATCH_SIZE = 20;
 
@@ -30,8 +30,21 @@ export async function POST(request: NextRequest) {
     let processed = 0;
 
     for (const person of people) {
-      const query = buildSearchQuery(person.name, person.company_name);
-      const results = await searchGoogleNews(query);
+      if (shouldSkipCompany(person.company_name)) {
+        await sql`UPDATE people SET updated_at = now() WHERE id = ${person.id}`;
+        processed++;
+        continue;
+      }
+
+      const queries = buildSearchQueries(person.name, person.company_name);
+      const allResults = [];
+      for (const q of queries) {
+        const r = await searchGoogleNews(q);
+        allResults.push(...r);
+      }
+      // Deduplicate by link
+      const seen = new Set<string>();
+      const results = allResults.filter(r => { if (seen.has(r.link)) return false; seen.add(r.link); return true; });
 
       for (const result of results) {
         // Filter irrelevant headlines

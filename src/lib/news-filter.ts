@@ -1,33 +1,35 @@
 /**
- * News relevance filter v4 — Score-based post-fetch validation.
+ * News relevance filter v5 — Context-aware scoring.
  *
- * After fetching articles, each headline gets a relevance score.
- * Only articles above the threshold are kept.
+ * Key insight: when a company name is a common English word (e.g., "Speak"),
+ * we check if the word is used AS the company name or as a regular word.
  *
- * Scoring:
- *   Person full name in headline      → +10 (auto-pass)
- *   First + last name both present    → +8
- *   Company name + business context   → +6
- *   Company name in specific source   → +4
- *   Company name alone (unique name)  → +3
- *   Company name alone (generic name) → -5 (likely false positive)
- *   Anti-context detected             → -10 (clearly unrelated)
+ * Signals that it's used as a company name:
+ * - Capitalized at non-sentence-start position ("...at Speak, the language...")
+ * - Followed by business context ("Speak raises", "Speak CEO", "Speak app")
+ * - Person name also appears in the headline
  *
- * Threshold: >= 3
+ * Signals that it's used as a regular word:
+ * - Used as a verb ("to speak", "will speak", "speaks at")
+ * - Used as a common noun ("nothing to do", "the framework for")
+ * - No business context nearby
  */
 
-// ---- Generic name detection ----
-
+// ---- Common English words that are also company names ----
+// This list is comprehensive — covers verbs, nouns, adjectives
 const COMMON_WORDS = new Set([
+  // From our DB + known problematic words
   "speak", "nothing", "world", "merge", "sift", "flare", "series",
   "prepared", "pylon", "sola", "neon", "martin", "linear", "notion",
   "framework", "deel", "granola", "pensive", "tracksuit", "meridian",
   "windsurf", "intercom", "luma", "anza", "bolt", "scale", "pulse",
   "flow", "dash", "snap", "loop", "blend", "drift", "fuse", "glide",
   "harvest", "hive", "ignite", "compass", "atlas", "prism", "canvas",
-  "harbor", "beacon", "frontier", "summit", "bridge",
+  "harbor", "beacon", "frontier", "summit", "bridge", "fountain",
+  "whisper", "anchor", "forge", "craft", "cipher", "cascade", "ember",
 ]);
 
+// Known non-company entries
 const NOT_COMPANIES = new Set([
   "lucy guo", "godard abel", "nirav patel", "joshua browder",
   "rebecca lynn", "dan uyemura", "will bryk", "benjamin mann",
@@ -40,6 +42,34 @@ const NOT_COMPANIES = new Set([
   "ex-meta cto & gigascale founder", "instagram co-founder & anthropic cpo",
   "co-founder of snowflake", "snowflake cfo", "captain of seoul robotics",
 ]);
+
+// Business context words — if these appear near the company name, it's likely about the company
+const BUSINESS_WORDS = new Set([
+  "ceo", "cto", "coo", "cfo", "founder", "cofounder", "co-founder",
+  "startup", "funding", "raised", "raises", "valuation", "revenue",
+  "users", "customers", "platform", "app", "saas", "launch", "launched",
+  "product", "company", "enterprise", "growth", "investor", "vc",
+  "venture", "capital", "ipo", "acquisition", "acquired", "merger",
+  "partnership", "hire", "hired", "appoint", "appointed", "board",
+  "layoff", "unicorn", "billion", "million", "arr", "mrr",
+  "tech", "software", "cloud", "api", "ai", "data",
+  "automation", "robotics", "crypto", "blockchain", "fintech",
+  "marketplace", "ecommerce", "series a", "series b", "series c",
+  "seed", "round", "backed", "investment",
+]);
+
+// Tech/business news sources
+const TECH_SOURCES = new Set([
+  "techcrunch", "bloomberg", "bloomberg.com", "reuters", "forbes", "fortune",
+  "cnbc", "venturebeat", "the verge", "wired", "axios",
+  "the information", "business insider", "businessinsider.com",
+  "saastr", "crunchbase", "pitchbook", "yahoo finance",
+  "the next web", "ars technica", "pcmag", "fast company",
+  "inc.com", "entrepreneur", "business wire", "pr newswire",
+  "analytics insight", "pulse 2.0", "the rundown ai",
+]);
+
+// ---- Helper functions ----
 
 function isGenericName(name: string): boolean {
   const lower = name.toLowerCase().trim();
@@ -63,64 +93,50 @@ export function buildSearchQueries(personName: string, companyName: string | nul
   return queries;
 }
 
-// ---- Business context keywords ----
+// ---- Context analysis for generic company names ----
 
-const BUSINESS_CONTEXT = [
-  "ceo", "cto", "coo", "cfo", "founder", "co-founder", "cofounder",
-  "startup", "funding", "raised", "series", "valuation", "revenue",
-  "users", "customers", "platform", "app", "saas", "ai", "launch",
-  "product", "company", "enterprise", "growth", "investor", "vc",
-  "venture", "capital", "ipo", "acquisition", "acquired", "merger",
-  "partnership", "hire", "appoint", "board", "employee", "layoff",
-  "unicorn", "billion", "million", "arr", "mrr", "b2b", "b2c",
-  "tech", "software", "cloud", "api", "data", "machine learning",
-  "automation", "robotics", "crypto", "blockchain", "fintech",
-  "marketplace", "ecommerce", "logistics",
-];
+/**
+ * Check if a generic company name is used AS the company name (not as a regular word).
+ * Returns true if it looks like it refers to the company.
+ */
+function isUsedAsCompanyName(headline: string, companyName: string): boolean {
+  const lower = headline.toLowerCase();
+  const companyLower = companyName.toLowerCase();
 
-// Known tech/business news sources
-const TECH_SOURCES = new Set([
-  "techcrunch", "bloomberg", "reuters", "forbes", "fortune",
-  "cnbc", "venturebeat", "the verge", "wired", "axios",
-  "the information", "business insider", "businessinsider.com",
-  "saastr", "crunchbase", "pitchbook", "yahoo finance",
-  "the next web", "ars technica", "pcmag", "fast company",
-  "inc.com", "entrepreneur", "business wire", "pr newswire",
-  "analytics insight", "pulse 2.0",
-]);
+  // Check if the word appears with business context nearby (within ~50 chars)
+  const idx = lower.indexOf(companyLower);
+  if (idx === -1) return false;
 
-// ---- Anti-context: signals the article is NOT about the company ----
+  // Get surrounding context (50 chars before and after)
+  const start = Math.max(0, idx - 50);
+  const end = Math.min(lower.length, idx + companyLower.length + 50);
+  const context = lower.slice(start, end);
 
-const ANTI_PATTERNS = [
-  // "speak" as verb
-  /\bwill speak\b/i, /\bto speak\b/i, /\bspeaks? at\b/i,
-  /\bspeak out\b/i, /\bspeak during\b/i, /\bspeaker\b/i,
-  /\bspoke at\b/i, /\bspeak from\b/i, /\bspoken\b/i,
-  // "nothing" as pronoun
-  /\bnothing to\b/i, /\bnothing but\b/i, /\bnothing like\b/i,
-  /\bfor nothing\b/i, /\bhas nothing\b/i, /\bdoes nothing\b/i,
-  /\bmean nothing\b/i, /\bnothing wrong\b/i, /\bnothing new\b/i,
-  // "framework" as concept
-  /\bframework for\b/i, /\bregulatory framework\b/i,
-  /\blegal framework\b/i, /\bpolicy framework\b/i,
-  // "linear" as adjective
-  /\blinear regression\b/i, /\blinear algebra\b/i, /\bnon-linear\b/i,
-  // "world" as common noun
-  /\baround the world\b/i, /\bworld cup\b/i, /\bworld war\b/i,
-  /\bworld record\b/i, /\bin the world\b/i, /\bworld series\b/i,
-  // "merge" as verb
-  /\bmerge with\b/i, /\bmerge into\b/i, /\bmerge lanes\b/i,
-  // General non-business
-  /\b(sports?|weather|recipe|horoscope|cricket|football|basketball|soccer|nfl|nba|mlb)\b/i,
-  /\b(election|obituary|died at|passed away|tv show|movie review|box office)\b/i,
-  /\b(white house|congress|senate|parliament|supreme court|presidential)\b/i,
-  /\b(gabby petito|trump|biden|taylor swift|kardashian)\b/i,
-  /\b(police|arrested|murder|crime scene|domestic violence|shooting)\b/i,
-  /\b(real estate listing|property for sale|home prices)\b/i,
-  /\b(astronaut|nasa|space station|lunar)\b/i,
-];
+  // Business context nearby → likely company name
+  for (const bw of BUSINESS_WORDS) {
+    if (context.includes(bw)) return true;
+  }
 
-// ---- Scoring function ----
+  // Check if it's capitalized in the original headline (non-sentence-start)
+  // Find the word in original headline
+  const origIdx = headline.toLowerCase().indexOf(companyLower);
+  if (origIdx > 0) {
+    const charBefore = headline[origIdx - 1];
+    const isCapitalized = headline[origIdx] === headline[origIdx].toUpperCase();
+    // Capitalized after a space (not sentence start) → likely proper noun / company
+    if (charBefore === " " && isCapitalized) {
+      // But check it's not after a period (sentence start)
+      const textBefore = headline.slice(Math.max(0, origIdx - 3), origIdx).trim();
+      if (!textBefore.endsWith(".") && !textBefore.endsWith("!") && !textBefore.endsWith("?")) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+// ---- Main scoring function ----
 
 function scoreRelevance(
   headline: string,
@@ -131,48 +147,54 @@ function scoreRelevance(
   const lower = headline.toLowerCase();
   let score = 0;
 
-  // Anti-context check first (strong negative signal)
-  if (ANTI_PATTERNS.some(p => p.test(headline))) {
-    score -= 10;
-  }
-
-  // Person name matching
+  // ---- Person name matching ----
   const personLower = personName.toLowerCase();
   const nameParts = personLower.split(/\s+/).filter(p => p.length > 1);
 
   if (lower.includes(personLower)) {
-    // Full name match — very strong
-    score += 10;
+    score += 10; // Full name match
   } else if (nameParts.length >= 2 && nameParts.every(p => lower.includes(p))) {
-    // All name parts present
-    score += 8;
+    score += 8; // All name parts present
   }
 
-  // Company name matching
+  // ---- Company name matching ----
   if (companyName) {
     const companyLower = companyName.toLowerCase();
     const generic = isGenericName(companyName);
 
     if (lower.includes(companyLower)) {
       if (generic) {
-        // Generic name match — could be false positive
-        // Only count it if business context is present
-        const hasBizContext = BUSINESS_CONTEXT.some(kw => lower.includes(kw));
-        score += hasBizContext ? 4 : -5;
+        // Generic name — check context to see if it's used as the company name
+        if (isUsedAsCompanyName(headline, companyName)) {
+          score += 5; // Used as company name with business context
+        } else {
+          score -= 8; // Used as regular English word — strong negative
+        }
       } else {
-        // Specific company name — good signal
-        score += 5;
+        score += 5; // Specific company name — good signal
       }
     }
   }
 
-  // Business context boost
-  const bizKeywordCount = BUSINESS_CONTEXT.filter(kw => lower.includes(kw)).length;
-  if (bizKeywordCount >= 2) score += 2;
-
-  // Tech source boost
+  // ---- Source quality ----
   if (sourceDomain && TECH_SOURCES.has(sourceDomain.toLowerCase())) {
     score += 2;
+  }
+
+  // ---- Topic blockers (strong negative) ----
+  const blockPatterns = [
+    /\b(sports?|weather|recipe|horoscope|cricket|football|basketball|soccer|nfl|nba|mlb)\b/i,
+    /\b(election|obituary|died at|passed away|tv show|movie review|box office)\b/i,
+    /\b(white house|congress|senate|parliament|supreme court|presidential)\b/i,
+    /\b(gabby petito|trump|biden|taylor swift|kardashian)\b/i,
+    /\b(police|arrested|murder|crime scene|domestic violence|shooting)\b/i,
+    /\b(real estate listing|property for sale|home prices)\b/i,
+    /\b(astronaut|nasa|space station|lunar mission)\b/i,
+    /\b(ice cream|flavors?|ingredients?|cooking)\b/i,
+    /\b(horse racing|stakes|derby|jockey)\b/i,
+  ];
+  if (blockPatterns.some(p => p.test(headline))) {
+    score -= 10;
   }
 
   return score;
@@ -182,7 +204,6 @@ const RELEVANCE_THRESHOLD = 3;
 
 /**
  * Check if a headline is relevant to the person/company.
- * Uses score-based validation after fetching.
  */
 export function isHeadlineRelevant(
   headline: string,
@@ -190,6 +211,5 @@ export function isHeadlineRelevant(
   companyName: string | null,
   sourceDomain?: string | null,
 ): boolean {
-  const score = scoreRelevance(headline, personName, companyName, sourceDomain || null);
-  return score >= RELEVANCE_THRESHOLD;
+  return scoreRelevance(headline, personName, companyName, sourceDomain || null) >= RELEVANCE_THRESHOLD;
 }

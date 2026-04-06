@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
 import { fetchAllVideos, parseVideoTitle, makeSlug, CHANNELS, type Channel } from "@/lib/youtube";
+import { verifyCronAuth } from "@/lib/cron-auth";
 
 export async function POST(request: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 });
-  }
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authError = verifyCronAuth(request);
+  if (authError) return authError;
 
   try {
     let newPeople = 0;

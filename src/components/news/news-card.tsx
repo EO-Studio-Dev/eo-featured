@@ -143,7 +143,7 @@ export function NewsCard({ item }: { item: DeduplicatedNewsItem }) {
         rel="noopener noreferrer"
         className="mt-4 block"
       >
-        <h3 className="font-serif text-[36px] leading-[1.15] tracking-[0] text-foreground hover:text-accent">
+        <h3 className="font-serif text-[24px] leading-[1.15] tracking-[0] text-foreground hover:text-accent md:text-[36px]">
           {highlightKeywords(stripSource(item.headline), item.person_name, item.company_name)}
         </h3>
       </a>

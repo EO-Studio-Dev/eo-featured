@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { deduplicateNews, deduplicateNewsByStoryId } from "../lib/news-dedup";
 import type { NewsItem } from "../types/supabase";
 
-function makeItem(overrides: Partial<NewsItem> & { story_id?: string }): NewsItem {
+function makeItem(overrides: Partial<NewsItem>): NewsItem {
   return {
     id: Math.random().toString(),
     person_id: "p1",
@@ -16,8 +16,9 @@ function makeItem(overrides: Partial<NewsItem> & { story_id?: string }): NewsIte
     discovered_at: new Date().toISOString(),
     confidence: 0.8,
     og_image_url: null,
+    story_id: null,
     ...overrides,
-  } as NewsItem;
+  };
 }
 
 describe("deduplicateNews", () => {
@@ -44,9 +45,9 @@ describe("deduplicateNews", () => {
 describe("deduplicateNewsByStoryId", () => {
   it("groups items with same story_id", () => {
     const items = [
-      makeItem({ headline: "Article A from TechCrunch", source_domain: "TechCrunch", story_id: "perplexity-500m" } as Partial<NewsItem>),
-      makeItem({ headline: "Article B from Bloomberg", source_domain: "Bloomberg", story_id: "perplexity-500m" } as Partial<NewsItem>),
-      makeItem({ headline: "Unrelated article", story_id: "other-story" } as Partial<NewsItem>),
+      makeItem({ headline: "Article A from TechCrunch", source_domain: "TechCrunch", story_id: "perplexity-500m" }),
+      makeItem({ headline: "Article B from Bloomberg", source_domain: "Bloomberg", story_id: "perplexity-500m" }),
+      makeItem({ headline: "Unrelated article", story_id: "other-story" }),
     ];
     const result = deduplicateNewsByStoryId(items);
     expect(result.length).toBe(2);
@@ -58,8 +59,8 @@ describe("deduplicateNewsByStoryId", () => {
 
   it("picks highest-tier source as main", () => {
     const items = [
-      makeItem({ headline: "From small blog", source_domain: "smallblog.com", story_id: "test" } as Partial<NewsItem>),
-      makeItem({ headline: "From Bloomberg", source_domain: "Bloomberg", story_id: "test" } as Partial<NewsItem>),
+      makeItem({ headline: "From small blog", source_domain: "smallblog.com", story_id: "test" }),
+      makeItem({ headline: "From Bloomberg", source_domain: "Bloomberg", story_id: "test" }),
     ];
     const result = deduplicateNewsByStoryId(items);
     expect(result[0].source_domain).toBe("Bloomberg");

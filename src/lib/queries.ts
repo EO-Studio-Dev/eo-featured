@@ -142,15 +142,19 @@ export async function getStats(channel: string = "en") {
 // -- news queries --
 
 export async function getRecentNews(filters?: { category?: NewsCategory; limit?: number; offset?: number; excludeOther?: boolean; channel?: string }): Promise<NewsItem[]> {
-  const limit = filters?.limit || 12;
-  const offset = filters?.offset || 0;
+  const limit = Math.min(filters?.limit || 12, 50);
+  const offset = Math.max(filters?.offset || 0, 0);
   const channel = filters?.channel || "en";
 
-  const conditions: string[] = [`p.channel = '${channel}'`];
-  if (filters?.category) conditions.push(`n.category = '${filters.category}'`);
-  if (filters?.excludeOther) conditions.push(`n.category != 'other'`);
+  const conditions: string[] = [];
+  const values: (string | number)[] = [];
+  let idx = 1;
 
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  conditions.push(`p.channel = $${idx}`); values.push(channel); idx++;
+  if (filters?.category) { conditions.push(`n.category = $${idx}`); values.push(filters.category); idx++; }
+  if (filters?.excludeOther) { conditions.push(`n.category != 'other'`); }
+
+  const where = `WHERE ${conditions.join(" AND ")}`;
 
   const { rows } = await sql.query(`
     SELECT
@@ -165,7 +169,7 @@ export async function getRecentNews(filters?: { category?: NewsCategory; limit?:
     ${where}
     ORDER BY COALESCE(n.published_at, n.discovered_at) DESC
     LIMIT ${limit} OFFSET ${offset}
-  `);
+  `, values);
   return rows as NewsItem[];
 }
 

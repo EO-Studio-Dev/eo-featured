@@ -2,20 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
 import { searchGoogleNews } from "@/lib/news";
 import { computeConfidence, extractDomain } from "@/lib/news-categorizer";
-import { buildSearchQueries, isHeadlineRelevant, shouldSkipCompany } from "@/lib/news-filter";
+import { buildSearchQueries, isHeadlineRelevant } from "@/lib/news-filter";
 import { analyzeHeadlinesBatched } from "@/lib/news-ai";
+import { verifyCronAuth } from "@/lib/cron-auth";
 
 const BATCH_SIZE = 20;
 
 export async function POST(request: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 });
-  }
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authError = verifyCronAuth(request);
+  if (authError) return authError;
 
   try {
     const { rows: people } = await sql`

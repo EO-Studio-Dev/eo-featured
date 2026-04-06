@@ -33,6 +33,7 @@ export async function NewsSection({ channel = "en" }: { channel?: string }) {
         acquisitionItems={deduplicateNewsByStoryId(acquisitionNews)}
         ipoItems={deduplicateNewsByStoryId(ipoNews)}
         launchItems={deduplicateNewsByStoryId(launchNews)}
+        channel={channel}
       />
     </div>
   );

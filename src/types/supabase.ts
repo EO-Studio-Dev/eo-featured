@@ -75,6 +75,7 @@ export interface NewsItem {
   discovered_at: string;
   confidence: number;
   og_image_url: string | null;
+  story_id: string | null;
   // Joined
   person_name?: string;
   person_slug?: string;

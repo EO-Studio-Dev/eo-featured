@@ -22,9 +22,10 @@ interface NewsGridProps {
   acquisitionItems: DeduplicatedNewsItem[];
   ipoItems: DeduplicatedNewsItem[];
   launchItems: DeduplicatedNewsItem[];
+  channel?: string;
 }
 
-export function NewsGrid({ allItems, fundingItems, acquisitionItems, ipoItems, launchItems }: NewsGridProps) {
+export function NewsGrid({ allItems, fundingItems, acquisitionItems, ipoItems, launchItems, channel = "en" }: NewsGridProps) {
   const [activeCategory, setActiveCategory] = useState<NewsCategory | "all">("all");
   const [extraItems, setExtraItems] = useState<DeduplicatedNewsItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,7 +50,7 @@ export function NewsGrid({ allItems, fundingItems, acquisitionItems, ipoItems, l
   const loadMore = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(items.length) });
+      const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(items.length), channel });
       if (activeCategory !== "all") params.set("category", activeCategory);
       const res = await fetch(`/api/news?${params}`);
       const data = await res.json();
@@ -68,10 +69,30 @@ export function NewsGrid({ allItems, fundingItems, acquisitionItems, ipoItems, l
   return (
     <div>
       {/* Category tabs */}
-      <div className="mb-6 flex gap-0 overflow-x-auto scrollbar-hide">
+      <div
+        role="tablist"
+        aria-label="News category filter"
+        className="mb-6 flex gap-0 overflow-x-auto scrollbar-hide"
+        onKeyDown={(e) => {
+          const tabs = CATEGORY_TABS;
+          const idx = tabs.findIndex(t => t.value === activeCategory);
+          let next = idx;
+          if (e.key === "ArrowRight") next = (idx + 1) % tabs.length;
+          else if (e.key === "ArrowLeft") next = (idx - 1 + tabs.length) % tabs.length;
+          else if (e.key === "Home") next = 0;
+          else if (e.key === "End") next = tabs.length - 1;
+          else return;
+          e.preventDefault();
+          handleCategoryChange(tabs[next].value);
+          (e.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]')[next])?.focus();
+        }}
+      >
         {CATEGORY_TABS.map((tab) => (
           <button
             key={tab.value}
+            role="tab"
+            aria-selected={activeCategory === tab.value}
+            tabIndex={activeCategory === tab.value ? 0 : -1}
             onClick={() => handleCategoryChange(tab.value)}
             className={cn(
               "whitespace-nowrap border-[1.5px] border-border px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.05em] transition-colors -ml-[1.5px] first:ml-0",
@@ -99,7 +120,13 @@ export function NewsGrid({ allItems, fundingItems, acquisitionItems, ipoItems, l
               <NewsCard key={item.id} item={item} />
             ))}
           </div>
-          {hasMore && <LoadTrigger onVisible={loadMore} loading={loading} />}
+          {hasMore ? (
+            <LoadTrigger onVisible={loadMore} loading={loading} />
+          ) : items.length > 0 ? (
+            <div className="mt-8 py-4 text-center text-[11px] font-bold uppercase tracking-[0.05em] text-text-tertiary">
+              End of results
+            </div>
+          ) : null}
         </>
       )}
     </div>

@@ -134,7 +134,7 @@ export function deduplicateNewsByStoryId(items: NewsItem[]): DeduplicatedNewsIte
   const ungrouped: NewsItem[] = [];
 
   for (const item of items) {
-    const sid = (item as unknown as { story_id?: string }).story_id || null;
+    const sid = item.story_id || null;
     if (sid) {
       const group = storyGroups.get(sid) || [];
       group.push(item);

@@ -40,7 +40,7 @@ async function seed() {
         await sql`UPDATE people SET company_id = COALESCE(${companyId}, company_id), updated_at = now() WHERE id = ${personId}`;
       }
     } else {
-      const slug = makeSlug(parsed.personName);
+      const slug = channel === "en" ? makeSlug(parsed.personName) : makeSlug(`${channel}-${parsed.personName}`);
       const { rows: created } = await sql`
         INSERT INTO people (name, slug, role, company_id, channel) VALUES (${parsed.personName}, ${slug}, ${parsed.role}, ${companyId}, ${channel}) RETURNING id
       `;

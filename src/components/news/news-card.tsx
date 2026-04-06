@@ -104,9 +104,10 @@ export function NewsCard({ item }: { item: DeduplicatedNewsItem }) {
   const thumbnail = item.appearance_thumbnail;
   const faviconUrl = getFaviconUrl(item.source_domain);
   const hasRelated = item.relatedSources && item.relatedSources.length > 0;
+  const isRecent = item.published_at && (Date.now() - new Date(item.published_at).getTime()) < 24 * 60 * 60 * 1000;
 
   return (
-    <div className="border-[1.5px] border-border p-6 transition-colors hover:border-foreground">
+    <div className={`border-[1.5px] p-6 transition-colors hover:border-foreground ${isRecent ? "border-red-500" : "border-border"}`}>
       {/* Source + Category + Time */}
       <div className="flex items-center gap-3">
         {faviconUrl && (

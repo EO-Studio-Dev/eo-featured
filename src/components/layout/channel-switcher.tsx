@@ -35,7 +35,8 @@ export function ChannelSwitcher() {
     } else {
       params.set("channel", channel);
     }
-    router.push(`${pathname}?${params.toString()}`);
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
     setOpen(false);
   };
 

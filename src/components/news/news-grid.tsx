@@ -64,7 +64,7 @@ export function NewsGrid({ allItems, fundingItems, acquisitionItems, ipoItems, l
       setHasMore(false);
     }
     setLoading(false);
-  }, [activeCategory, items.length]);
+  }, [activeCategory, items.length, channel]);
 
   return (
     <div>

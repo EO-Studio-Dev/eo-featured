@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     const videos = await fetchAllVideos(channel);
 
     for (const video of videos) {
+      try {
       const parsed = parseVideoTitle(video.title);
       if (!parsed.personName) {
         skipped++;
@@ -96,6 +97,10 @@ export async function POST(request: NextRequest) {
             AND description = ${'EO appearance: ' + video.title}
         )
       `;
+      } catch (e) {
+        console.error(`Error processing video "${video.title}":`, e);
+        skipped++;
+      }
     }
     } // end channel loop
 

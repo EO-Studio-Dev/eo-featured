@@ -1,7 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { NewsCategory } from "@/types/supabase";
 
-const client = new Anthropic();
+function getClient() {
+  return new Anthropic();
+}
 
 interface AnalysisResult {
   relevant: boolean;
@@ -23,7 +25,7 @@ export async function analyzeHeadlines(
     `[${i}] "${h.headline}" — Person: ${h.personName}, Company: ${h.companyName || "N/A"}`
   ).join("\n");
 
-  const response = await client.messages.create({
+  const response = await getClient().messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 2000,
     messages: [{

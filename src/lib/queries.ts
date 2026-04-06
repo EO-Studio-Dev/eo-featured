@@ -168,8 +168,8 @@ export async function getRecentNews(filters?: { category?: NewsCategory; limit?:
     LEFT JOIN companies c ON n.company_id = c.id
     ${where}
     ORDER BY COALESCE(n.published_at, n.discovered_at) DESC
-    LIMIT ${limit} OFFSET ${offset}
-  `, values);
+    LIMIT $${idx} OFFSET $${idx + 1}
+  `, [...values, limit, offset]);
   return rows as NewsItem[];
 }
 

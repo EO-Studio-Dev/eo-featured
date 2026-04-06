@@ -3,7 +3,8 @@
 import { useState, useCallback } from "react";
 import { NewsCard } from "./news-card";
 import { cn } from "@/lib/utils";
-import type { NewsItem, NewsCategory } from "@/types/supabase";
+import type { NewsCategory } from "@/types/supabase";
+import type { DeduplicatedNewsItem } from "@/lib/news-dedup";
 
 const PAGE_SIZE = 12;
 
@@ -16,20 +17,20 @@ const CATEGORY_TABS: { value: NewsCategory | "all"; label: string }[] = [
 ];
 
 interface NewsGridProps {
-  allItems: NewsItem[];
-  fundingItems: NewsItem[];
-  acquisitionItems: NewsItem[];
-  ipoItems: NewsItem[];
-  launchItems: NewsItem[];
+  allItems: DeduplicatedNewsItem[];
+  fundingItems: DeduplicatedNewsItem[];
+  acquisitionItems: DeduplicatedNewsItem[];
+  ipoItems: DeduplicatedNewsItem[];
+  launchItems: DeduplicatedNewsItem[];
 }
 
 export function NewsGrid({ allItems, fundingItems, acquisitionItems, ipoItems, launchItems }: NewsGridProps) {
   const [activeCategory, setActiveCategory] = useState<NewsCategory | "all">("all");
-  const [extraItems, setExtraItems] = useState<NewsItem[]>([]);
+  const [extraItems, setExtraItems] = useState<DeduplicatedNewsItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  const baseMap: Record<string, NewsItem[]> = {
+  const baseMap: Record<string, DeduplicatedNewsItem[]> = {
     all: allItems,
     funding: fundingItems,
     acquisition: acquisitionItems,

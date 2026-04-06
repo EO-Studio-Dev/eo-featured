@@ -1,4 +1,5 @@
 import { getRecentNews } from "@/lib/queries";
+import { deduplicateNews } from "@/lib/news-dedup";
 import { NewsGrid } from "./news-grid";
 import type { NewsItem } from "@/types/supabase";
 
@@ -11,11 +12,11 @@ export async function NewsSection() {
 
   try {
     [allNews, fundingNews, acquisitionNews, ipoNews, launchNews] = await Promise.all([
-      getRecentNews({ limit: 18 }),
-      getRecentNews({ category: "funding", limit: 12 }),
-      getRecentNews({ category: "acquisition", limit: 12 }),
-      getRecentNews({ category: "ipo", limit: 12 }),
-      getRecentNews({ category: "launch", limit: 12 }),
+      getRecentNews({ limit: 30 }),
+      getRecentNews({ category: "funding", limit: 20 }),
+      getRecentNews({ category: "acquisition", limit: 20 }),
+      getRecentNews({ category: "ipo", limit: 20 }),
+      getRecentNews({ category: "launch", limit: 20 }),
     ]);
   } catch {
     // DB not connected
@@ -27,11 +28,11 @@ export async function NewsSection() {
         Latest Updates
       </h2>
       <NewsGrid
-        allItems={allNews}
-        fundingItems={fundingNews}
-        acquisitionItems={acquisitionNews}
-        ipoItems={ipoNews}
-        launchItems={launchNews}
+        allItems={deduplicateNews(allNews)}
+        fundingItems={deduplicateNews(fundingNews)}
+        acquisitionItems={deduplicateNews(acquisitionNews)}
+        ipoItems={deduplicateNews(ipoNews)}
+        launchItems={deduplicateNews(launchNews)}
       />
     </div>
   );

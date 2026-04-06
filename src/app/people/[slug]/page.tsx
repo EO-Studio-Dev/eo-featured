@@ -194,7 +194,7 @@ export default async function PersonDetailPage({
               </h2>
               <div className="space-y-4">
                 {news.map((item) => (
-                  <NewsCard key={item.id} item={item} />
+                  <NewsCard key={item.id} item={{ ...item, relatedSources: [] }} />
                 ))}
               </div>
             </div>

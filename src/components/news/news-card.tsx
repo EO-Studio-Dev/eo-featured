@@ -3,12 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { CategoryBadge } from "@/components/ui/category-badge";
-import type { NewsItem } from "@/types/supabase";
-
-function stripSource(headline: string): string {
-  // Remove trailing " - Source Name" or " – Source" or " — Source"
-  return headline.replace(/\s[-–—]\s[^-–—]+$/, "");
-}
+import type { DeduplicatedNewsItem } from "@/lib/news-dedup";
 
 function relativeTime(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -21,6 +16,10 @@ function relativeTime(dateStr: string | null): string {
   if (days < 30) return `${days}d ago`;
   const months = Math.floor(days / 30);
   return `${months}mo ago`;
+}
+
+function stripSource(headline: string): string {
+  return headline.replace(/\s[-–—]\s[^-–—]+$/, "");
 }
 
 const SOURCE_DOMAIN_MAP: Record<string, string> = {
@@ -41,28 +40,21 @@ const SOURCE_DOMAIN_MAP: Record<string, string> = {
   "pr newswire": "prnewswire.com",
   "the next web": "thenextweb.com",
   "the business journals": "bizjournals.com",
-  "analytics insight": "analyticsinsight.net",
-  "yahoo finance": "finance.yahoo.com",
-  "nbc bay area": "nbcbayarea.com",
   saastr: "saastr.com",
   "tom's guide": "tomsguide.com",
   "ars technica": "arstechnica.com",
   "the rundown ai": "therundown.ai",
-  "pcmag": "pcmag.com",
-  "inkl.com": "inkl.com",
+  pcmag: "pcmag.com",
+  "yahoo finance": "finance.yahoo.com",
+  "fast company": "fastcompany.com",
+  "fox business": "foxbusiness.com",
 };
 
 function guessDomain(sourceName: string | null): string | null {
   if (!sourceName) return null;
   const lower = sourceName.toLowerCase();
-
-  // Check mapping
   if (SOURCE_DOMAIN_MAP[lower]) return SOURCE_DOMAIN_MAP[lower];
-
-  // If already looks like a domain
   if (lower.includes(".")) return lower;
-
-  // Guess: remove spaces + .com
   return lower.replace(/\s+/g, "") + ".com";
 }
 
@@ -72,9 +64,10 @@ function getFaviconUrl(sourceName: string | null): string | null {
   return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
 }
 
-export function NewsCard({ item }: { item: NewsItem }) {
+export function NewsCard({ item }: { item: DeduplicatedNewsItem }) {
   const thumbnail = item.appearance_thumbnail;
   const faviconUrl = getFaviconUrl(item.source_domain);
+  const hasRelated = item.relatedSources && item.relatedSources.length > 0;
 
   return (
     <div className="border-[1.5px] border-border p-6 transition-colors hover:border-foreground">
@@ -101,6 +94,7 @@ export function NewsCard({ item }: { item: NewsItem }) {
         </span>
       </div>
 
+      {/* Headline */}
       <a
         href={item.source_url}
         target="_blank"
@@ -142,6 +136,41 @@ export function NewsCard({ item }: { item: NewsItem }) {
           </div>
         </div>
       </div>
+
+      {/* Related sources */}
+      {hasRelated && (
+        <div className="mt-4 border-t-[1.5px] border-border pt-3">
+          <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
+            Also covered by
+          </span>
+          <div className="mt-1.5 flex flex-wrap gap-2">
+            {item.relatedSources.map((src, i) => {
+              const favicon = getFaviconUrl(src.domain);
+              return (
+                <a
+                  key={i}
+                  href={src.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 border-[1.5px] border-border px-2 py-1 text-[11px] text-text-tertiary transition-colors hover:border-foreground hover:text-foreground"
+                >
+                  {favicon && (
+                    <Image
+                      src={favicon}
+                      alt=""
+                      width={14}
+                      height={14}
+                      className="shrink-0"
+                      unoptimized
+                    />
+                  )}
+                  {src.domain}
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

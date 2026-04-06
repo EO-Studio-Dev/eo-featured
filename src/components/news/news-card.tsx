@@ -107,7 +107,12 @@ export function NewsCard({ item }: { item: DeduplicatedNewsItem }) {
   const isRecent = item.published_at && (Date.now() - new Date(item.published_at).getTime()) < 24 * 60 * 60 * 1000;
 
   return (
-    <div className={`border-[1.5px] p-6 transition-colors hover:border-foreground ${isRecent ? "border-red-500" : "border-border"}`}>
+    <div className={`relative border-[1.5px] p-6 transition-colors hover:border-foreground ${isRecent ? "border-red-500" : "border-border"}`}>
+      {isRecent && (
+        <span className="absolute right-4 top-4 border-[1.5px] border-red-500 bg-red-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-red-500">
+          TODAY
+        </span>
+      )}
       {/* Source + Category + Time */}
       <div className="flex items-center gap-3">
         {faviconUrl && (

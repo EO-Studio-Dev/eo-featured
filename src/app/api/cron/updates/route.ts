@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
 import { searchGoogleNews } from "@/lib/news";
 import { categorize, computeConfidence, extractDomain } from "@/lib/news-categorizer";
+import { buildSearchQuery, isHeadlineRelevant } from "@/lib/news-filter";
 
 const BATCH_SIZE = 20;
 
@@ -16,7 +17,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Get people to update (oldest updated_at first)
     const { rows: people } = await sql`
       SELECT p.id, p.name, c.name as company_name, c.id as company_id
       FROM people p
@@ -26,24 +26,24 @@ export async function POST(request: NextRequest) {
     `;
 
     let totalNews = 0;
+    let filtered = 0;
     let processed = 0;
 
     for (const person of people) {
-      const query = person.company_name
-        ? `"${person.name}" "${person.company_name}"`
-        : `"${person.name}"`;
-
+      const query = buildSearchQuery(person.name, person.company_name);
       const results = await searchGoogleNews(query);
 
       for (const result of results) {
+        // Filter irrelevant headlines
+        if (!isHeadlineRelevant(result.title, person.name, person.company_name)) {
+          filtered++;
+          continue;
+        }
+
         const domain = extractDomain(result.link);
         const category = categorize(result.title);
         const confidence = computeConfidence(
-          result.title,
-          person.name,
-          person.company_name,
-          domain,
-          result.pubDate
+          result.title, person.name, person.company_name, domain, result.pubDate
         );
 
         try {
@@ -53,13 +53,11 @@ export async function POST(request: NextRequest) {
             ON CONFLICT (person_id, source_url) DO NOTHING
           `;
           if (rowCount && rowCount > 0) totalNews++;
-        } catch (e) {
-          // Skip duplicates or constraint violations
-          console.error(`News insert error for ${person.name}:`, e);
+        } catch {
+          // Skip duplicates
         }
       }
 
-      // Mark person as updated
       await sql`UPDATE people SET updated_at = now() WHERE id = ${person.id}`;
       processed++;
     }
@@ -68,6 +66,7 @@ export async function POST(request: NextRequest) {
       success: true,
       processed,
       new_news: totalNews,
+      filtered_out: filtered,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

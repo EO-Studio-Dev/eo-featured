@@ -41,20 +41,29 @@ async function seed() {
       }
     } else {
       const slug = channel === "en" ? makeSlug(parsed.personName) : makeSlug(`${channel}-${parsed.personName}`);
-      const { rows: created } = await sql`
-        INSERT INTO people (name, slug, role, company_id, channel) VALUES (${parsed.personName}, ${slug}, ${parsed.role}, ${companyId}, ${channel}) RETURNING id
-      `;
-      personId = created[0].id;
-      newPeople++;
+      try {
+        const { rows: created } = await sql`
+          INSERT INTO people (name, slug, role, company_id, channel) VALUES (${parsed.personName}, ${slug}, ${parsed.role}, ${companyId}, ${channel}) RETURNING id
+        `;
+        personId = created[0].id;
+        newPeople++;
+      } catch {
+        // Slug collision — skip this person
+        continue;
+      }
       console.log(`  + ${parsed.personName} (${parsed.companyName || "no company"})`);
     }
 
-    const { rowCount } = await sql`
-      INSERT INTO appearances (person_id, video_id, title, published_at, thumbnail_url)
-      VALUES (${personId}, ${video.videoId}, ${video.title}, ${video.publishedAt}, ${video.thumbnailUrl})
-      ON CONFLICT (person_id, video_id) DO NOTHING
-    `;
-    if (rowCount && rowCount > 0) newAppearances++;
+    try {
+      const { rowCount } = await sql`
+        INSERT INTO appearances (person_id, video_id, title, published_at, thumbnail_url)
+        VALUES (${personId}, ${video.videoId}, ${video.title}, ${video.publishedAt}, ${video.thumbnailUrl})
+        ON CONFLICT (person_id, video_id) DO NOTHING
+      `;
+      if (rowCount && rowCount > 0) newAppearances++;
+    } catch {
+      // skip
+    }
   }
 
   console.log(`\nDone! New people: ${newPeople}, New appearances: ${newAppearances}`);

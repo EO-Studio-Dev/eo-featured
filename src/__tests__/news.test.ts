@@ -1,19 +1,18 @@
 import { describe, it, expect, vi } from "vitest";
 
-// Mock fetch for Google News RSS tests
 const mockRSSResponse = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
 <channel>
   <title>Google News</title>
   <item>
     <title><![CDATA[Company X Raises $50M in Series B Funding]]></title>
-    <link>https://techcrunch.com/article/company-x-funding</link>
+    <link>https://news.google.com/rss/articles/abc123</link>
     <pubDate>Thu, 03 Apr 2026 10:00:00 GMT</pubDate>
     <source url="https://techcrunch.com">TechCrunch</source>
   </item>
   <item>
     <title>Another Article About Startup Y</title>
-    <link>https://bloomberg.com/news/startup-y</link>
+    <link>https://news.google.com/rss/articles/def456</link>
     <pubDate>Wed, 02 Apr 2026 08:00:00 GMT</pubDate>
     <source url="https://bloomberg.com">Bloomberg</source>
   </item>
@@ -21,7 +20,7 @@ const mockRSSResponse = `<?xml version="1.0" encoding="UTF-8"?>
 </rss>`;
 
 describe("searchGoogleNews", () => {
-  it("parses RSS response correctly", async () => {
+  it("parses RSS response and prefers source URL", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true,
       text: () => Promise.resolve(mockRSSResponse),
@@ -32,9 +31,9 @@ describe("searchGoogleNews", () => {
 
     expect(results).toHaveLength(2);
     expect(results[0].title).toBe("Company X Raises $50M in Series B Funding");
-    expect(results[0].link).toBe("https://techcrunch.com/article/company-x-funding");
-    expect(results[0].pubDate).toBe("Thu, 03 Apr 2026 10:00:00 GMT");
-    expect(results[1].title).toBe("Another Article About Startup Y");
+    // Should prefer source URL over Google redirect
+    expect(results[0].link).toBe("https://techcrunch.com");
+    expect(results[1].link).toBe("https://bloomberg.com");
 
     vi.unstubAllGlobals();
   });

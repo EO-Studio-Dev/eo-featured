@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { ChannelSwitcher } from "./channel-switcher";
 
@@ -12,7 +13,9 @@ export function Header() {
           EO FEATURED
         </Link>
         <div className="flex items-center gap-6">
-          <ChannelSwitcher />
+          <Suspense fallback={<div className="h-7 w-16" />}>
+            <ChannelSwitcher />
+          </Suspense>
           <nav className="flex items-center gap-6 text-[10px] uppercase tracking-[0.05em] text-text-tertiary">
             <Link href="/" className="transition-colors hover:text-foreground">
               People

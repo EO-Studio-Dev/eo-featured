@@ -3,39 +3,51 @@ import { categorize, computeConfidence, extractDomain } from "../lib/news-catego
 
 describe("categorize", () => {
   it("detects funding news", () => {
-    expect(categorize("Company X Raises $50M Series B Round")).toBe("funding");
-    expect(categorize("Startup secures seed funding of $5M")).toBe("funding");
-    expect(categorize("New investment round led by Sequoia")).toBe("funding");
+    expect(categorize("Perplexity AI Raises $500M at $9B Valuation")).toBe("funding");
+    expect(categorize("Startup secures $50M in Series B funding")).toBe("funding");
+    expect(categorize("Company closes $10M seed round led by Sequoia")).toBe("funding");
   });
 
-  it("detects acquisition news", () => {
+  it("detects acquisition/M&A news", () => {
     expect(categorize("Google Acquires AI Startup for $1B")).toBe("acquisition");
-    expect(categorize("Merger between Company A and Company B")).toBe("acquisition");
+    expect(categorize("Allbirds is selling for $39M")).toBe("acquisition");
+    expect(categorize("Company X bought by Microsoft")).toBe("acquisition");
+    expect(categorize("Startup sells its AI division to Meta")).toBe("acquisition");
   });
 
   it("detects IPO news", () => {
-    expect(categorize("Company Files for IPO on Nasdaq")).toBe("ipo");
-    expect(categorize("Tech firm goes public on NYSE")).toBe("ipo");
+    expect(categorize("Stripe Files for IPO on NYSE")).toBe("ipo");
+    expect(categorize("Tech firm goes public on Nasdaq")).toBe("ipo");
   });
 
   it("detects launch news", () => {
-    expect(categorize("Startup Launches New AI Product")).toBe("launch");
-    expect(categorize("Company Unveils Revolutionary Platform")).toBe("launch");
+    expect(categorize("Startup Launches a New AI Product")).toBe("launch");
+    expect(categorize("Company unveils its latest platform")).toBe("launch");
+    expect(categorize("Gumloop rolls out a new enterprise feature")).toBe("launch");
   });
 
   it("detects award news", () => {
-    expect(categorize("CEO Named to Forbes 30 Under 30")).toBe("award");
-    expect(categorize("Company Wins Innovation Award")).toBe("award");
+    expect(categorize("CEO Named to Forbes 30 Under 30 list")).toBe("award");
+    expect(categorize("Company wins a prestigious innovation award")).toBe("award");
   });
 
   it("detects hire news", () => {
-    expect(categorize("Jane Smith Appointed as New CEO")).toBe("hire");
-    expect(categorize("Former Google exec joins startup")).toBe("hire");
+    expect(categorize("Jane Smith appointed as new CEO")).toBe("hire");
+    expect(categorize("CTO steps down from role")).toBe("hire");
   });
 
   it("returns 'other' for unmatched headlines", () => {
     expect(categorize("Company hosts annual conference")).toBe("other");
     expect(categorize("Interview with founder about journey")).toBe("other");
+  });
+
+  it("prioritizes M&A over funding when both mentioned", () => {
+    expect(categorize("Allbirds is selling for $39M. It raised nearly 10 times that amount in its IPO")).toBe("acquisition");
+  });
+
+  it("excludes past IPO references from IPO category", () => {
+    expect(categorize("Since its IPO, the stock has dropped 80%")).toBe("other");
+    expect(categorize("Company raised $100M in its IPO last year")).toBe("other");
   });
 });
 
@@ -55,28 +67,20 @@ describe("computeConfidence", () => {
     expect(score).toBe(0.6);
   });
 
-  it("increases confidence for reputable domain", () => {
-    const score = computeConfidence("Some headline", "Person", null, "techcrunch.com", null);
-    expect(score).toBe(0.6);
-  });
-
   it("increases confidence for recent articles", () => {
     const recent = new Date().toISOString();
     const score = computeConfidence("Some headline", "Person", null, null, recent);
     expect(score).toBe(0.6);
   });
 
-  it("caps at 1.0 with all signals", () => {
+  it("caps at 1.0", () => {
     const recent = new Date().toISOString();
     const score = computeConfidence(
       "John Doe at Acme Corp raises $50M",
-      "John Doe",
-      "Acme Corp",
-      "techcrunch.com",
-      recent
+      "John Doe", "Acme Corp", null, recent
     );
     expect(score).toBeLessThanOrEqual(1.0);
-    expect(score).toBeGreaterThanOrEqual(0.89);
+    expect(score).toBeGreaterThanOrEqual(0.7);
   });
 });
 

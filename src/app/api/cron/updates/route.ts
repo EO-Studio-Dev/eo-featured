@@ -47,13 +47,13 @@ export async function POST(request: NextRequest) {
       const results = allResults.filter(r => { if (seen.has(r.link)) return false; seen.add(r.link); return true; });
 
       for (const result of results) {
+        const domain = extractDomain(result.link);
         // Filter irrelevant headlines
-        if (!isHeadlineRelevant(result.title, person.name, person.company_name)) {
+        if (!isHeadlineRelevant(result.title, person.name, person.company_name, domain)) {
           filtered++;
           continue;
         }
 
-        const domain = extractDomain(result.link);
         const category = categorize(result.title);
         const confidence = computeConfidence(
           result.title, person.name, person.company_name, domain, result.pubDate

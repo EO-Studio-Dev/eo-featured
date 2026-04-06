@@ -5,7 +5,7 @@ import { isHeadlineRelevant } from "../src/lib/news-filter";
 
 async function main() {
   const { rows } = await sql`
-    SELECT n.id, n.headline, p.name as person_name, c.name as company_name
+    SELECT n.id, n.headline, n.source_domain, p.name as person_name, c.name as company_name
     FROM news_items n
     JOIN people p ON n.person_id = p.id
     LEFT JOIN companies c ON n.company_id = c.id
@@ -15,7 +15,7 @@ async function main() {
   let removed = 0;
 
   for (const row of rows) {
-    if (!isHeadlineRelevant(row.headline, row.person_name, row.company_name)) {
+    if (!isHeadlineRelevant(row.headline, row.person_name, row.company_name, row.source_domain)) {
       await sql`DELETE FROM news_items WHERE id = ${row.id}`;
       removed++;
     }

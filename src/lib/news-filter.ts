@@ -200,6 +200,12 @@ function scoreRelevance(
   return score;
 }
 
+// Blocked news sources — low quality or irrelevant aggregators
+const BLOCKED_SOURCES = new Set([
+  "msn.com", "africa.businessinsider.com", "news.google.com",
+  "yahoo.com", "aol.com",
+]);
+
 const RELEVANCE_THRESHOLD = 3;
 
 /**
@@ -211,5 +217,8 @@ export function isHeadlineRelevant(
   companyName: string | null,
   sourceDomain?: string | null,
 ): boolean {
+  // Block low-quality sources
+  if (sourceDomain && BLOCKED_SOURCES.has(sourceDomain.toLowerCase())) return false;
+
   return scoreRelevance(headline, personName, companyName, sourceDomain || null) >= RELEVANCE_THRESHOLD;
 }

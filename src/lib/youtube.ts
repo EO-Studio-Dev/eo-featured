@@ -21,6 +21,7 @@ export async function fetchRecentVideos(pageToken?: string): Promise<{
     maxResults: String(MAX_RESULTS),
     order: "date",
     type: "video",
+    videoDuration: "medium", // Exclude shorts (< 4min) and long (> 20min)
     key: apiKey,
   });
 

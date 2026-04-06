@@ -12,7 +12,7 @@ export async function NewsSection() {
 
   try {
     [allNews, fundingNews, acquisitionNews, ipoNews, launchNews] = await Promise.all([
-      getRecentNews({ limit: 30 }),
+      getRecentNews({ limit: 30, excludeOther: true }),
       getRecentNews({ category: "funding", limit: 20 }),
       getRecentNews({ category: "acquisition", limit: 20 }),
       getRecentNews({ category: "ipo", limit: 20 }),

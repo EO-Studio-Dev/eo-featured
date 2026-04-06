@@ -207,15 +207,48 @@ function scoreRelevance(
   return score;
 }
 
-// Blacklist — block known junk/irrelevant sources. Everything else is allowed.
-const BLOCKED_SOURCES = new Set([
-  "msn.com", "africa.businessinsider.com", "news.google.com",
-  "aol.com", "people.com", "dailymail.co.uk",
-  "inkl.com", "galoremag.com", "whatstrending.com",
-  "americasbestracing.net", "speedonthewater.com",
-  "wdwnt.com", "sportico.com", "navalnews.com",
-  "borgenproject.org", "overtdefense.com",
-  "seapower magazine", "marshall university athletics",
+// Known credible sources — only these are shown on the homepage
+const CREDIBLE_SOURCES = new Set([
+  // Tier 1: Top-tier
+  "bloomberg", "bloomberg.com", "reuters", "reuters.com",
+  "wsj.com", "ft.com", "nytimes.com", "the new york times",
+  "washingtonpost.com", "the washington post",
+  // Tier 2: Major tech/business
+  "techcrunch", "techcrunch.com", "cnbc", "cnbc.com",
+  "forbes", "forbes.com", "fortune", "fortune.com",
+  "the information", "theinformation.com",
+  "bbc", "bbc.com", "bbc news",
+  "guardian", "theguardian.com",
+  // Tier 3: Tech-focused
+  "the verge", "theverge.com", "wired", "wired.com",
+  "venturebeat", "venturebeat.com", "axios", "axios.com",
+  "ars technica", "arstechnica.com",
+  "fast company", "fastcompany.com", "inc.com",
+  "business insider", "businessinsider.com",
+  "siliconangle", "siliconangle.com",
+  "geekwire", "geekwire.com", "sifted.eu",
+  "the next web", "thenextweb.com",
+  "techinasia.com", "techinasia",
+  // Tier 4: Startup/VC focused
+  "saastr", "saastr.com", "crunchbase", "pitchbook", "pitchbook.com",
+  "yahoo finance", "finance.yahoo.com",
+  "benzinga", "benzinga.com", "time.com", "time", "time magazine",
+  "entrepreneur", "vox",
+  "the rundown ai", "unite.ai",
+  "techfundingnews.com", "pulse 2.0", "pulse2.com",
+  "crowdfundinsider.com", "fintech.global", "fintechfutures.com",
+  "betakit", "betakit.com",
+  "fox business", "foxbusiness.com",
+  "the business journals", "bizjournals.com",
+  "yourstory.com", "yourstory",
+  "calcalistech.com", "koreaherald.com",
+  // Wire services
+  "business wire", "businesswire.com",
+  "pr newswire", "prnewswire.com",
+  // Additional credible
+  "newcomer", "newcomer | substack",
+  "legal it insider", "thesaasnews.com",
+  "cybernews", "cybernews.com",
 ]);
 
 const RELEVANCE_THRESHOLD = 3;
@@ -229,10 +262,10 @@ export function isHeadlineRelevant(
   companyName: string | null,
   sourceDomain?: string | null,
 ): boolean {
-  // Blacklist: block known junk sources
+  // Only allow credible sources
   if (sourceDomain) {
     const lower = sourceDomain.toLowerCase();
-    if (BLOCKED_SOURCES.has(lower)) return false;
+    if (!CREDIBLE_SOURCES.has(lower)) return false;
   }
 
   return scoreRelevance(headline, personName, companyName, sourceDomain || null) >= RELEVANCE_THRESHOLD;

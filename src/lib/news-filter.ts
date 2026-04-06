@@ -200,10 +200,39 @@ function scoreRelevance(
   return score;
 }
 
-// Blocked news sources — low quality or irrelevant aggregators
-const BLOCKED_SOURCES = new Set([
-  "msn.com", "africa.businessinsider.com", "news.google.com",
-  "yahoo.com", "aol.com",
+// Whitelist — only these sources are allowed
+const ALLOWED_SOURCES = new Set([
+  // Tier 1: Major tech/business news
+  "techcrunch", "techcrunch.com", "bloomberg", "bloomberg.com",
+  "reuters", "reuters.com", "forbes", "forbes.com",
+  "fortune", "fortune.com", "cnbc", "cnbc.com",
+  "wsj.com", "ft.com",
+  // Tier 2: Tech-focused
+  "the verge", "theverge.com", "wired", "wired.com",
+  "venturebeat", "venturebeat.com", "axios", "axios.com",
+  "the information", "theinformation.com", "ars technica", "arstechnica.com",
+  "fast company", "fastcompany.com", "inc.com",
+  "siliconangle.com", "geekwire.com", "sifted.eu",
+  "techinasia.com", "the next web", "thenextweb.com",
+  // Tier 3: Business/Startup
+  "business insider", "businessinsider.com",
+  "saastr", "saastr.com", "crunchbase", "pitchbook",
+  "yahoo finance", "finance.yahoo.com",
+  "entrepreneur", "benzinga.com", "time.com",
+  "time magazine", "vox",
+  // Tier 4: Industry specific
+  "the rundown ai", "unite.ai", "techfundingnews.com",
+  "crowdfundin insider", "crowdfundinsider.com",
+  "fintech.global", "fintechfutures.com",
+  "pulse 2.0", "pulse2.com",
+  // Wire services
+  "business wire", "businesswire.com",
+  "pr newswire", "prnewswire.com",
+  // Tier 5: Decent regional/niche
+  "fox business", "foxbusiness.com",
+  "the business journals", "bizjournals.com",
+  "calcalistech.com", "koreaherald.com",
+  "yourstory.com", "yourstory",
 ]);
 
 const RELEVANCE_THRESHOLD = 3;
@@ -217,8 +246,11 @@ export function isHeadlineRelevant(
   companyName: string | null,
   sourceDomain?: string | null,
 ): boolean {
-  // Block low-quality sources
-  if (sourceDomain && BLOCKED_SOURCES.has(sourceDomain.toLowerCase())) return false;
+  // Whitelist: only allow known quality sources
+  if (sourceDomain) {
+    const lower = sourceDomain.toLowerCase();
+    if (!ALLOWED_SOURCES.has(lower)) return false;
+  }
 
   return scoreRelevance(headline, personName, companyName, sourceDomain || null) >= RELEVANCE_THRESHOLD;
 }

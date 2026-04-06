@@ -1,28 +1,112 @@
 import type { NewsCategory } from "@/types/supabase";
 
-const CATEGORY_KEYWORDS: Record<NewsCategory, string[]> = {
-  acquisition: ["acquir", "acquisition", "merge", "merger", "buys", "bought", "takeover", "deal to buy", "purchase"],
-  funding: ["raised", "funding", "series a", "series b", "series c", "series d", "series e", "seed round", "investment", "venture", "capital", "fundrais", "fundraise", "pre-seed", "valuation", "billion-dollar", "unicorn", "round led", "secures", "closes round"],
-  ipo: ["ipo", "public offering", "nasdaq", "nyse", "listed", "goes public", "stock exchange", "spac", "direct listing"],
-  launch: ["launch", "released", "introduces", "unveils", "debuts", "announces", "new product", "rolls out", "open source"],
-  award: ["award", "winner", "recognized", "named to", "forbes", "30 under", "top 50", "honor", "best of"],
-  hire: ["joins", "appointed", "named ceo", "named cto", "named coo", "hires", "new hire", "steps down", "resigns", "new role"],
-  other: [],
-};
-
-const REPUTABLE_DOMAINS = [
-  "techcrunch.com", "bloomberg.com", "reuters.com", "wsj.com",
-  "ft.com", "cnbc.com", "forbes.com", "crunchbase.com",
-  "venturebeat.com", "theinformation.com", "axios.com",
-  "businessinsider.com", "wired.com", "theverge.com",
+/**
+ * Category rules — checked in order, first match wins.
+ * M&A (acquisition) is checked BEFORE funding to avoid misclassification.
+ *
+ * M&A: company sold, bought, merged, or acquired by another entity
+ * Funding: company raised money from investors (VC, seed, series rounds)
+ */
+const CATEGORY_RULES: { category: NewsCategory; patterns: RegExp[] }[] = [
+  // M&A — must be checked before funding (some acquisitions mention dollar amounts)
+  {
+    category: "acquisition",
+    patterns: [
+      /\bacquir(e[sd]?|ing)\b/i,
+      /\bacquisition\b/i,
+      /\bmerger?\b/i,
+      /\b(buys|bought|buying)\b/i,
+      /\btakeover\b/i,
+      /\bdeal to buy\b/i,
+      /\bpurchase[sd]?\b/i,
+      /\bsold to\b/i,
+      /\bsells? (itself|to|its)\b/i,
+      /\bbought by\b/i,
+      /\btaken over\b/i,
+      /\btaken private\b/i,
+    ],
+  },
+  // IPO — check before funding (IPO is a specific exit event)
+  {
+    category: "ipo",
+    patterns: [
+      /\bipo\b/i,
+      /\bpublic offering\b/i,
+      /\bnasdaq\b/i,
+      /\bnyse\b/i,
+      /\bgoes public\b/i,
+      /\bgoing public\b/i,
+      /\bstock exchange\b/i,
+      /\bspac\b/i,
+      /\bdirect listing\b/i,
+      /\bfiles? (for|to) (go|list)\b/i,
+    ],
+  },
+  // Funding — money raised from investors
+  {
+    category: "funding",
+    patterns: [
+      /\braised?\b/i,
+      /\bfundrais/i,
+      /\bfunding\b/i,
+      /\bseries [a-f]\b/i,
+      /\bseed round\b/i,
+      /\bpre-seed\b/i,
+      /\bround led by\b/i,
+      /\bsecures? .*\b(million|billion|funding|round)\b/i,
+      /\bcloses? .*\b(round|funding|million|billion)\b/i,
+      /\b(venture|vc) (capital|funding|backed)\b/i,
+      /\bunicorn\b/i,
+      /\bvaluation\b/i,
+      /\b\$\d+[mb]\b.*\b(round|funding|investment)\b/i,
+    ],
+  },
+  // Launch — new product, feature, or company milestone
+  {
+    category: "launch",
+    patterns: [
+      /\blaunch(es|ed|ing)?\b/i,
+      /\bunveils?\b/i,
+      /\bdebuts?\b/i,
+      /\brolls? out\b/i,
+      /\bopen[- ]source[sd]?\b/i,
+      /\bnew (product|feature|platform|tool|service)\b/i,
+      /\breleases? (new|its|a)\b/i,
+      /\bintroduc(es|ed|ing)\b/i,
+    ],
+  },
+  // Award/Recognition
+  {
+    category: "award",
+    patterns: [
+      /\baward/i,
+      /\bwinner\b/i,
+      /\brecognized\b/i,
+      /\bnamed to\b/i,
+      /\bforbes.*(list|30|under)\b/i,
+      /\b(top|best) \d+\b/i,
+      /\bhonor(ed)?\b/i,
+    ],
+  },
+  // Hire/Leadership changes
+  {
+    category: "hire",
+    patterns: [
+      /\bjoins? (as|the)\b/i,
+      /\bappointed? (as|new)?\b/i,
+      /\bnamed (new )?(ceo|cto|coo|cfo|president|chief)\b/i,
+      /\bhires?\b/i,
+      /\bsteps? down\b/i,
+      /\bresigns?\b/i,
+      /\bnew (ceo|cto|coo|cfo|chief|head)\b/i,
+    ],
+  },
 ];
 
 export function categorize(headline: string): NewsCategory {
-  const lower = headline.toLowerCase();
-  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
-    if (category === "other") continue;
-    if (keywords.some((kw) => lower.includes(kw))) {
-      return category as NewsCategory;
+  for (const rule of CATEGORY_RULES) {
+    if (rule.patterns.some((p) => p.test(headline))) {
+      return rule.category;
     }
   }
   return "other";
@@ -36,16 +120,12 @@ export function computeConfidence(
   publishedAt: string | null
 ): number {
   let score = 0.5;
-
   if (headline.toLowerCase().includes(personName.toLowerCase())) score += 0.1;
   if (companyName && headline.toLowerCase().includes(companyName.toLowerCase())) score += 0.1;
-  if (sourceDomain && REPUTABLE_DOMAINS.some((d) => sourceDomain.includes(d))) score += 0.1;
-
   if (publishedAt) {
     const daysAgo = (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24);
     if (daysAgo <= 90) score += 0.1;
   }
-
   return Math.min(score, 1.0);
 }
 

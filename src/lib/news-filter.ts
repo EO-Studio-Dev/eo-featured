@@ -207,52 +207,15 @@ function scoreRelevance(
   return score;
 }
 
-// Whitelist — only these sources are allowed
-const ALLOWED_SOURCES = new Set([
-  // Tier 1: Major tech/business news
-  "techcrunch", "techcrunch.com", "bloomberg", "bloomberg.com",
-  "reuters", "reuters.com", "forbes", "forbes.com",
-  "fortune", "fortune.com", "cnbc", "cnbc.com",
-  "wsj.com", "ft.com",
-  // Tier 2: Tech-focused
-  "the verge", "theverge.com", "wired", "wired.com",
-  "venturebeat", "venturebeat.com", "axios", "axios.com",
-  "the information", "theinformation.com", "ars technica", "arstechnica.com",
-  "fast company", "fastcompany.com", "inc.com",
-  "siliconangle.com", "geekwire.com", "sifted.eu",
-  "techinasia.com", "the next web", "thenextweb.com",
-  // Tier 3: Business/Startup
-  "business insider", "businessinsider.com",
-  "saastr", "saastr.com", "crunchbase", "pitchbook",
-  "yahoo finance", "finance.yahoo.com",
-  "entrepreneur", "benzinga.com", "time.com",
-  "time magazine", "vox",
-  // Tier 4: Industry specific
-  "the rundown ai", "unite.ai", "techfundingnews.com",
-  "crowdfundin insider", "crowdfundinsider.com",
-  "fintech.global", "fintechfutures.com",
-  "pulse 2.0", "pulse2.com",
-  // Wire services
-  "business wire", "businesswire.com",
-  "pr newswire", "prnewswire.com",
-  // Tier 5: Decent regional/niche
-  "fox business", "foxbusiness.com",
-  "the business journals", "bizjournals.com",
-  "calcalistech.com", "koreaherald.com",
-  "yourstory.com", "yourstory",
-  // Additional quality sources
-  "betakit", "betakit.com",
-  "legal it insider", "legalitinsider.com",
-  "it brief australia", "itbrief.com.au",
-  "newcomer", "newcomer | substack",
-  "siliconangle", "siliconangle.com",
-  "the globe and mail", "theglobeandmail.com",
-  "artificiallawyer.com", "artificial lawyer",
-  "geektime.com", "nytimes.com", "the new york times",
-  "washingtonpost.com", "the washington post",
-  "bbc", "bbc.com", "bbc news",
-  "guardian", "theguardian.com",
-  "time", "time.com", "time magazine",
+// Blacklist — block known junk/irrelevant sources. Everything else is allowed.
+const BLOCKED_SOURCES = new Set([
+  "msn.com", "africa.businessinsider.com", "news.google.com",
+  "aol.com", "people.com", "dailymail.co.uk",
+  "inkl.com", "galoremag.com", "whatstrending.com",
+  "americasbestracing.net", "speedonthewater.com",
+  "wdwnt.com", "sportico.com", "navalnews.com",
+  "borgenproject.org", "overtdefense.com",
+  "seapower magazine", "marshall university athletics",
 ]);
 
 const RELEVANCE_THRESHOLD = 3;
@@ -266,10 +229,10 @@ export function isHeadlineRelevant(
   companyName: string | null,
   sourceDomain?: string | null,
 ): boolean {
-  // Whitelist: only allow known quality sources
+  // Blacklist: block known junk sources
   if (sourceDomain) {
     const lower = sourceDomain.toLowerCase();
-    if (!ALLOWED_SOURCES.has(lower)) return false;
+    if (BLOCKED_SOURCES.has(lower)) return false;
   }
 
   return scoreRelevance(headline, personName, companyName, sourceDomain || null) >= RELEVANCE_THRESHOLD;

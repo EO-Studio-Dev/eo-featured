@@ -39,7 +39,11 @@ export function NewsGrid({ allItems, fundingItems, acquisitionItems, ipoItems, l
     launch: launchItems,
   };
 
-  const items = [...(baseMap[activeCategory] || allItems), ...extraItems];
+  const baseItems = baseMap[activeCategory] || allItems;
+  const filteredExtra = activeCategory === "all"
+    ? extraItems
+    : extraItems.filter(n => n.category === activeCategory);
+  const items = [...baseItems, ...filteredExtra];
 
   const handleCategoryChange = (cat: NewsCategory | "all") => {
     setActiveCategory(cat);

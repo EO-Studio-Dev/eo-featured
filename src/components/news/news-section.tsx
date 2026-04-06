@@ -5,22 +5,20 @@ import type { NewsItem } from "@/types/supabase";
 
 export async function NewsSection({ channel = "en" }: { channel?: string }) {
   let allNews: NewsItem[] = [];
-  let fundingNews: NewsItem[] = [];
-  let acquisitionNews: NewsItem[] = [];
-  let ipoNews: NewsItem[] = [];
-  let launchNews: NewsItem[] = [];
 
   try {
-    [allNews, fundingNews, acquisitionNews, ipoNews, launchNews] = await Promise.all([
-      getRecentNews({ limit: 30, excludeOther: true, channel }),
-      getRecentNews({ category: "funding", limit: 20, channel }),
-      getRecentNews({ category: "acquisition", limit: 20, channel }),
-      getRecentNews({ category: "ipo", limit: 20, channel }),
-      getRecentNews({ category: "launch", limit: 20, channel }),
-    ]);
+    allNews = await getRecentNews({ limit: 80, excludeOther: true, channel });
   } catch {
     // DB not connected
   }
+
+  // Dedup first, then split by category
+  const deduped = deduplicateNewsByStoryId(allNews);
+
+  const fundingItems = deduped.filter(n => n.category === "funding");
+  const acquisitionItems = deduped.filter(n => n.category === "acquisition");
+  const ipoItems = deduped.filter(n => n.category === "ipo");
+  const launchItems = deduped.filter(n => n.category === "launch");
 
   return (
     <div>
@@ -28,11 +26,11 @@ export async function NewsSection({ channel = "en" }: { channel?: string }) {
         Latest Updates
       </h2>
       <NewsGrid
-        allItems={deduplicateNewsByStoryId(allNews)}
-        fundingItems={deduplicateNewsByStoryId(fundingNews)}
-        acquisitionItems={deduplicateNewsByStoryId(acquisitionNews)}
-        ipoItems={deduplicateNewsByStoryId(ipoNews)}
-        launchItems={deduplicateNewsByStoryId(launchNews)}
+        allItems={deduped}
+        fundingItems={fundingItems}
+        acquisitionItems={acquisitionItems}
+        ipoItems={ipoItems}
+        launchItems={launchItems}
         channel={channel}
       />
     </div>

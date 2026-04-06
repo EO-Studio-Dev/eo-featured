@@ -106,12 +106,24 @@ export function parseVideoTitle(title: string): {
     };
   }
 
-  // Single part after pipe — could be person name
-  return {
-    personName: parts[0],
-    companyName: null,
-    role: null,
-  };
+  // Single part after pipe — determine if it's a person or company name
+  const single = parts[0];
+  // Person name pattern: "First Last" or "First Last-Last"
+  const looksLikePerson = /^[A-Z][a-z]+\s+[A-Z][a-z]/.test(single);
+
+  if (looksLikePerson) {
+    return { personName: single, companyName: null, role: null };
+  }
+
+  // Doesn't look like a person name — treat as company, try to find person in title before pipe
+  const beforePipe = decoded.split("|")[0].trim();
+  // Look for "First Last" pattern in the title portion
+  const nameInTitle = beforePipe.match(/([A-Z][a-z]+\s+[A-Z][a-z]+(?:-[A-Z][a-z]+)?)\s*$/);
+  if (nameInTitle) {
+    return { personName: nameInTitle[1], companyName: single, role: null };
+  }
+
+  return { personName: single, companyName: null, role: null };
 }
 
 function slugify(text: string): string {

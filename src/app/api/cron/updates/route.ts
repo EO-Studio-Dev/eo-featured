@@ -31,11 +31,7 @@ export async function POST(request: NextRequest) {
     let processed = 0;
 
     for (const person of people) {
-      if (shouldSkipCompany(person.company_name)) {
-        await sql`UPDATE people SET updated_at = now() WHERE id = ${person.id}`;
-        processed++;
-        continue;
-      }
+      // Don't skip — buildSearchQueries handles generic names by searching person name only
 
       const queries = buildSearchQueries(person.name, person.company_name);
       const allResults = [];

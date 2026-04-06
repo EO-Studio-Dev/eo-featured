@@ -18,9 +18,7 @@ async function seed() {
   let processed = 0;
 
   for (const person of people) {
-    if (shouldSkipCompany(person.company_name)) {
-      continue;
-    }
+    // Don't skip — even for generic/non-companies, search by person name
 
     const queries = buildSearchQueries(person.name, person.company_name);
     const allResults = [];

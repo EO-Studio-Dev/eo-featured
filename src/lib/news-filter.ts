@@ -86,12 +86,19 @@ export function shouldSkipCompany(companyName: string | null): boolean {
 }
 
 export function buildSearchQueries(personName: string, companyName: string | null): string[] {
+  // Always search by person name
   const queries = [`"${personName}"`];
+  // Also search by company name if it's specific enough
   if (companyName && !shouldSkipCompany(companyName) && !isGenericName(companyName)) {
     queries.push(`"${companyName}"`);
   }
   return queries;
 }
+
+/**
+ * Should we skip this person entirely? Only for NOT_COMPANIES entries.
+ * Even generic company names still get searched by person name.
+ */
 
 // ---- Context analysis for generic company names ----
 
@@ -233,6 +240,19 @@ const ALLOWED_SOURCES = new Set([
   "the business journals", "bizjournals.com",
   "calcalistech.com", "koreaherald.com",
   "yourstory.com", "yourstory",
+  // Additional quality sources
+  "betakit", "betakit.com",
+  "legal it insider", "legalitinsider.com",
+  "it brief australia", "itbrief.com.au",
+  "newcomer", "newcomer | substack",
+  "siliconangle", "siliconangle.com",
+  "the globe and mail", "theglobeandmail.com",
+  "artificiallawyer.com", "artificial lawyer",
+  "geektime.com", "nytimes.com", "the new york times",
+  "washingtonpost.com", "the washington post",
+  "bbc", "bbc.com", "bbc news",
+  "guardian", "theguardian.com",
+  "time", "time.com", "time magazine",
 ]);
 
 const RELEVANCE_THRESHOLD = 3;

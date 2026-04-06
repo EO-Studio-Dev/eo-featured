@@ -1,6 +1,6 @@
 import type { NewsItem } from "@/types/supabase";
 
-// Source tier — lower number = higher authority
+// Source tier — lower = more authoritative
 const SOURCE_TIER: Record<string, number> = {
   "bloomberg": 1, "bloomberg.com": 1, "reuters": 1, "reuters.com": 1,
   "wsj.com": 1, "ft.com": 1,
@@ -11,8 +11,9 @@ const SOURCE_TIER: Record<string, number> = {
   "axios": 3, "axios.com": 3, "venturebeat": 3, "venturebeat.com": 3,
   "business insider": 3, "businessinsider.com": 3,
   "fast company": 3, "fastcompany.com": 3, "inc.com": 3,
-  "sifted.eu": 3, "geekwire.com": 3, "ars technica": 3,
+  "sifted.eu": 3, "geekwire.com": 3,
   "yahoo finance": 4, "finance.yahoo.com": 4,
+  "the rundown ai": 4,
   "business wire": 5, "businesswire.com": 5,
   "pr newswire": 5, "prnewswire.com": 5,
 };
@@ -22,20 +23,39 @@ function getSourceTier(domain: string | null): number {
   return SOURCE_TIER[domain.toLowerCase()] || 6;
 }
 
-// Stop words to ignore when comparing headlines
 const STOP_WORDS = new Set([
-  "a", "an", "the", "is", "are", "was", "were", "be", "been",
-  "to", "of", "in", "for", "on", "at", "by", "with", "from",
-  "and", "or", "but", "not", "no", "its", "it", "this", "that",
+  "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
+  "to", "of", "in", "for", "on", "at", "by", "with", "from", "into",
+  "and", "or", "but", "not", "no", "its", "it", "this", "that", "than",
   "as", "has", "have", "had", "will", "can", "may", "how", "why",
   "what", "who", "new", "says", "said", "about", "after", "over",
+  "more", "just", "also", "could", "would", "should", "much", "very",
+  "here", "there", "when", "where", "which", "these", "those",
 ]);
 
 function extractKeywords(headline: string): Set<string> {
-  // Remove source suffix (" - TechCrunch")
-  const clean = headline.replace(/\s[-–—]\s[^-–—]+$/, "");
+  const clean = headline.replace(/\s[-–—]\s[^-–—]+$/, ""); // Remove source suffix
   const words = clean.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/);
   return new Set(words.filter(w => w.length > 2 && !STOP_WORDS.has(w)));
+}
+
+/**
+ * Extract key entities — names, companies, dollar amounts.
+ * These are the strongest signals for same-story detection.
+ */
+function extractEntities(headline: string): Set<string> {
+  const entities = new Set<string>();
+  const lower = headline.toLowerCase();
+
+  // Dollar amounts
+  const dollars = lower.match(/\$[\d.]+[bmk]?/g);
+  if (dollars) dollars.forEach(d => entities.add(d));
+
+  // Capitalized proper nouns (likely names/companies)
+  const properNouns = headline.match(/\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)*/g);
+  if (properNouns) properNouns.forEach(n => entities.add(n.toLowerCase()));
+
+  return entities;
 }
 
 function similarity(a: Set<string>, b: Set<string>): number {
@@ -52,47 +72,45 @@ export interface DeduplicatedNewsItem extends NewsItem {
 }
 
 /**
- * Deduplicate news items by headline similarity.
- * Groups similar articles, keeps the most authoritative one,
- * attaches the rest as related source links.
+ * Deduplicate news items using multi-signal similarity:
+ * 1. Same person/company → lower threshold for grouping
+ * 2. Same category → lower threshold
+ * 3. Entity overlap (names, dollar amounts) → strong grouping signal
+ * 4. Keyword overlap → supplementary signal
  */
 export function deduplicateNews(items: NewsItem[]): DeduplicatedNewsItem[] {
   if (items.length === 0) return [];
 
-  const SIMILARITY_THRESHOLD = 0.5;
-
-  // Pre-compute keywords for each item
-  const keywordsMap = items.map(item => ({
+  const enriched = items.map(item => ({
     item,
     keywords: extractKeywords(item.headline),
+    entities: extractEntities(item.headline),
   }));
 
   const used = new Set<number>();
   const result: DeduplicatedNewsItem[] = [];
 
-  for (let i = 0; i < keywordsMap.length; i++) {
+  for (let i = 0; i < enriched.length; i++) {
     if (used.has(i)) continue;
 
-    const group: typeof keywordsMap = [keywordsMap[i]];
+    const group: typeof enriched = [enriched[i]];
     used.add(i);
 
-    // Find similar articles
-    for (let j = i + 1; j < keywordsMap.length; j++) {
+    for (let j = i + 1; j < enriched.length; j++) {
       if (used.has(j)) continue;
-      // Must be about the same person/company
-      if (keywordsMap[i].item.person_id !== keywordsMap[j].item.person_id) continue;
 
-      const sim = similarity(keywordsMap[i].keywords, keywordsMap[j].keywords);
-      if (sim >= SIMILARITY_THRESHOLD) {
-        group.push(keywordsMap[j]);
+      const a = enriched[i];
+      const b = enriched[j];
+
+      if (areSameStory(a, b)) {
+        group.push(b);
         used.add(j);
       }
     }
 
-    // Sort group by source tier (best first)
+    // Sort: best source first
     group.sort((a, b) => getSourceTier(a.item.source_domain) - getSourceTier(b.item.source_domain));
 
-    // Best item is the main one
     const main = group[0].item;
     const relatedSources = group.slice(1).map(g => ({
       domain: g.item.source_domain || "source",
@@ -103,4 +121,39 @@ export function deduplicateNews(items: NewsItem[]): DeduplicatedNewsItem[] {
   }
 
   return result;
+}
+
+function areSameStory(
+  a: { item: NewsItem; keywords: Set<string>; entities: Set<string> },
+  b: { item: NewsItem; keywords: Set<string>; entities: Set<string> },
+): boolean {
+  // Different people → never group (unless same company)
+  const samePerson = a.item.person_id === b.item.person_id;
+  const sameCompany = a.item.company_id && a.item.company_id === b.item.company_id;
+
+  if (!samePerson && !sameCompany) return false;
+
+  // Same category → strong signal they're about the same event
+  const sameCategory = a.item.category === b.item.category && a.item.category !== "other";
+
+  // Entity overlap (names, dollar amounts) → very strong signal
+  const entitySim = similarity(a.entities, b.entities);
+
+  // Keyword overlap
+  const keywordSim = similarity(a.keywords, b.keywords);
+
+  // Decision matrix:
+  // Same person + same category + any entity overlap → group
+  if (samePerson && sameCategory && entitySim > 0.2) return true;
+
+  // Same person + high keyword similarity → group
+  if (samePerson && keywordSim >= 0.4) return true;
+
+  // Same company + same category + high entity overlap → group
+  if (sameCompany && sameCategory && entitySim >= 0.3) return true;
+
+  // Very high keyword similarity for same person/company → group
+  if ((samePerson || sameCompany) && keywordSim >= 0.5) return true;
+
+  return false;
 }

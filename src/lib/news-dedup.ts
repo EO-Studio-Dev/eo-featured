@@ -150,11 +150,20 @@ export function deduplicateNewsByStoryId(items: NewsItem[]): DeduplicatedNewsIte
   for (const group of storyGroups.values()) {
     group.sort((a, b) => getSourceTier(a.source_domain) - getSourceTier(b.source_domain));
     const main = group[0];
+    // Use the most recent date from the group as the representative date
+    const latestDate = group.reduce((latest, item) => {
+      const d = new Date(item.published_at || item.discovered_at).getTime();
+      return d > latest ? d : latest;
+    }, 0);
     const related = group.slice(1).map(g => ({
       domain: g.source_domain || "source",
       url: g.source_url,
     }));
-    result.push({ ...main, relatedSources: related });
+    result.push({
+      ...main,
+      published_at: new Date(latestDate).toISOString(),
+      relatedSources: related,
+    });
   }
 
   // Process ungrouped with similarity-based dedup

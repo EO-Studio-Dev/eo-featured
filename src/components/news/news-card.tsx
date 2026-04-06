@@ -5,17 +5,18 @@ import Image from "next/image";
 import { CategoryBadge } from "@/components/ui/category-badge";
 import type { DeduplicatedNewsItem } from "@/lib/news-dedup";
 
-function relativeTime(dateStr: string | null): string {
+function formatTime(dateStr: string | null): string {
   if (!dateStr) return "";
-  const diff = Date.now() - new Date(dateStr).getTime();
+  const date = new Date(dateStr);
+  const diff = Date.now() - date.getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `${mins}m`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
-  const months = Math.floor(days / 30);
-  return `${months}mo ago`;
+  if (days < 7) return `${days}d`;
+  // After 7 days: show date like Instagram (e.g., "March 28")
+  return date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
 }
 
 function stripSource(headline: string): string {
@@ -90,7 +91,7 @@ export function NewsCard({ item }: { item: DeduplicatedNewsItem }) {
         )}
         <CategoryBadge category={item.category} />
         <span className="text-[11px] font-bold uppercase tracking-[0.05em] text-text-tertiary">
-          {relativeTime(item.published_at)}
+          {formatTime(item.published_at)}
         </span>
       </div>
 

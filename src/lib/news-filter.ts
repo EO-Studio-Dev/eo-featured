@@ -100,6 +100,13 @@ export function isHeadlineRelevant(
     /\b(gabby petito|trump|biden|taylor swift|kardashian)\b/i,
     /\b(police|arrested|murder|crime scene|domestic violence)\b/i,
     /\b(real estate listing|property for sale|home prices)\b/i,
+    /\bwill speak at\b/i,
+    /\bspeak out\b/i,
+    /\bspeak during\b/i,
+    /\bto speak\b/i,
+    /\bspeaks? at\b/i,
+    /\bspeaker for\b/i,
+    /\bspeak from\b/i,
   ];
   if (blockPatterns.some((p) => p.test(headline))) return false;
 

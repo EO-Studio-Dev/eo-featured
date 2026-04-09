@@ -188,6 +188,23 @@ export async function getNewsForPerson(personId: string): Promise<NewsItem[]> {
   return rows as NewsItem[];
 }
 
+export async function getNewsByPersonSlug(slug: string, limit: number = 10): Promise<NewsItem[]> {
+  const { rows } = await sql`
+    SELECT
+      n.id, n.person_id, n.company_id, n.category, n.headline, n.summary,
+      n.source_url, n.source_domain, n.published_at, n.discovered_at, n.confidence, n.og_image_url, n.story_id,
+      p.name as person_name, p.slug as person_slug, p.photo_url as person_photo,
+      c.name as company_name
+    FROM news_items n
+    JOIN people p ON n.person_id = p.id
+    LEFT JOIN companies c ON n.company_id = c.id
+    WHERE p.slug = ${slug}
+    ORDER BY COALESCE(n.published_at, n.discovered_at) DESC
+    LIMIT ${limit}
+  `;
+  return rows as NewsItem[];
+}
+
 // -- helpers --
 
 function mapPersonRow(row: Record<string, unknown>): Person {

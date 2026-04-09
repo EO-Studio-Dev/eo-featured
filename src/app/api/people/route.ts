@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const { people, nextCursor } = await getPeople(filters);
-    return NextResponse.json({ people, nextCursor });
+    return NextResponse.json({ people, nextCursor }, {
+      headers: { "Access-Control-Allow-Origin": "*" },
+    });
   } catch (error) {
     console.error("People API error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
